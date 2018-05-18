@@ -112,7 +112,7 @@ namespace BlastFromNCBI
                     {
                         Sequence = x.SelectSingleNode("hsp_hseq").InnerText,
                         MatchingPercentage = int.Parse(x.SelectSingleNode("hsp_identity").InnerText) * 100f / int.Parse(x.SelectSingleNode("hsp_align-len").InnerText)
-                    });
+                    }).OrderByDescending(x => x.MatchingPercentage);
 
                     OnFinished(RID, DateTime.Now - timeStarted, nodes.ToList());
                 }
