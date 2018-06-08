@@ -12,7 +12,7 @@ namespace Cliquely
     {
         private static readonly string[] emptyChars = { " ", "\t" };
 
-        public static Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesForGene(uint i_Gene, float i_Probability)
+        public static Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesForGene(uint i_Gene, float i_Probability, bool isHomology)
         {
             SqlHelper sql = new SqlHelper();
             Dictionary<uint, string[]> cleaned_data = new Dictionary<uint, string[]>();
@@ -107,6 +107,41 @@ namespace Cliquely
 			}
 
 			Dictionary<uint, Dictionary<uint, float>> probabilities = new Dictionary<uint, Dictionary<uint, float>>();
+
+            if(isHomology)
+            {
+                Dictionary<uint, List<string>> homGenes = new Dictionary<uint, List<string>>();
+                StringBuilder selectHomQuery = new StringBuilder("SELECT HomGene,Id FROM Gene WHERE ");
+                foreach (uint gene in genes.Keys)
+                {
+                    selectQuery.Append($"Id = \"{gene}\" OR ");
+                }
+                selectQuery.Remove(selectHomQuery.Length - 3, 3);
+
+                DataTable homDataTable = sql.Select(selectQuery.ToString());
+
+                foreach (DataRow row in homDataTable.Rows)
+                {
+                    uint geneId = row.Field<uint>("Id");
+                    uint homGeneId = row.Field<uint>("HomGene");
+
+                    if(homGenes.ContainsKey(homGeneId))
+                    {
+                        homGenes[homGeneId].AddRange(genes[geneId]);
+                    }
+                    else
+                    {
+                        homGenes.Add(homGeneId, genes[geneId].ToList());
+                    }
+                }
+
+                genes.Clear();
+
+                foreach(KeyValuePair<uint, List<string>> pair in homGenes)
+                {
+                    genes.Add(pair.Key, pair.Value.ToArray());
+                }
+            }
 
             foreach (uint gene in genes.Keys)
             {

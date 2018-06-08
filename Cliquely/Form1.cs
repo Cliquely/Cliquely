@@ -51,7 +51,7 @@ namespace Cliquely
         private void discoverCliques(uint gene)
         {
             DiscoverCliques discoverCliques;
-            var probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text));
+            var probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), false);
             if (probabilities == null)
             {
                 return;
