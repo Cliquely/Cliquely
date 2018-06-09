@@ -112,28 +112,39 @@ namespace Cliquely
             {
                 Dictionary<uint, List<string>> homGenes = new Dictionary<uint, List<string>>();
                 StringBuilder selectHomQuery = new StringBuilder("SELECT HomGene,Id FROM Gene WHERE ");
+                int genesQueryCount = 0;
                 foreach (uint gene in genes.Keys)
                 {
-                    selectQuery.Append($"Id = \"{gene}\" OR ");
-                }
-                selectQuery.Remove(selectHomQuery.Length - 3, 3);
+                    selectHomQuery.Append($"Id = {gene} OR ");
+                    genesQueryCount++;
 
-                DataTable homDataTable = sql.Select(selectQuery.ToString());
-
-                foreach (DataRow row in homDataTable.Rows)
-                {
-                    uint geneId = row.Field<uint>("Id");
-                    uint homGeneId = row.Field<uint>("HomGene");
-
-                    if(homGenes.ContainsKey(homGeneId))
+                    if(genesQueryCount == 999)
                     {
-                        homGenes[homGeneId].AddRange(genes[geneId]);
-                    }
-                    else
-                    {
-                        homGenes.Add(homGeneId, genes[geneId].ToList());
+                        selectHomQuery.Remove(selectHomQuery.Length - 3, 3);
+                        DataTable homDataTable = sql.Select(selectHomQuery.ToString());
+
+                        foreach (DataRow row in homDataTable.Rows)
+                        {
+                            uint geneId = (uint)row.Field<long>("Id");
+                            uint homGeneId = (uint)row.Field<long>("HomGene");
+
+                           if (homGenes.ContainsKey(homGeneId))
+                            {
+                                homGenes[homGeneId].AddRange(genes[geneId]);
+                            }
+                            else
+                            {
+                                homGenes.Add(homGeneId, genes[geneId].ToList());
+                            }
+                        }
+
+                        selectHomQuery = new StringBuilder("SELECT HomGene,Id FROM Gene WHERE ");
+                        genesQueryCount = 0;
                     }
                 }
+                
+
+
 
                 genes.Clear();
 
