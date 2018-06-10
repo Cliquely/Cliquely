@@ -105,14 +105,20 @@ namespace BlastFromNCBI
                      .SelectSingleNode("iteration")
                      .SelectSingleNode("iteration_hits")
                      .SelectNodes("hit");
-                if (hits != null)
-                {
-                    var nodes = hits.Select(y => y.SelectSingleNode("hit_hsps").SelectSingleNode("hsp"))
-                    .Select(x => new BlastGene
-                    {
-                        Sequence = x.SelectSingleNode("hsp_hseq").InnerText,
-                        MatchingPercentage = int.Parse(x.SelectSingleNode("hsp_identity").InnerText) * 100f / int.Parse(x.SelectSingleNode("hsp_align-len").InnerText)
-                    }).OrderByDescending(x => x.MatchingPercentage);
+				if (hits != null)
+				{
+					var nodes = hits.Select(x =>
+					{
+						var hsp = x.SelectSingleNode("hit_hsps").SelectSingleNode("hsp");
+						var accessionId = x.SelectSingleNode("hit_accession").InnerText;
+
+						return new BlastGene
+						{
+							AccessionId = accessionId,
+							Sequence = hsp.SelectSingleNode("hsp_hseq").InnerText,
+							MatchingPercentage = int.Parse(hsp.SelectSingleNode("hsp_identity").InnerText) * 100f / int.Parse(hsp.SelectSingleNode("hsp_align-len").InnerText)
+						};
+					}).OrderByDescending(x => x.MatchingPercentage);
 
                     OnFinished(RID, DateTime.Now - timeStarted, nodes.ToList());
                 }
