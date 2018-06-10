@@ -16,12 +16,11 @@ namespace Cliquely
         {
             SqlHelper sql = new SqlHelper();
             Dictionary<uint, string[]> cleaned_data = new Dictionary<uint, string[]>();
-			Dictionary<string, uint[]> reversed_cleaned_data = new Dictionary<string, uint[]>();
             Dictionary<uint, int> genesToUse = new Dictionary<uint, int>();
             List<string> bacteriasForGene = new List<string>();
+			Dictionary<string, List<uint>> reversed_cleaned_data = new Dictionary<string, List<uint>>();
 
-
-            DataTable bacteriasForGeneTable = sql.Select("SELECT * FROM Bacteria WHERE Gene = "+i_Gene);
+			DataTable bacteriasForGeneTable = sql.Select("SELECT * FROM Bacteria WHERE Gene = "+i_Gene);
             foreach(DataRow row in bacteriasForGeneTable.Rows)
             {
                 bacteriasForGene.Add(row.Field<string>("Bacteria"));
@@ -113,7 +112,8 @@ namespace Cliquely
                 Dictionary<uint, List<string>> homGenes = new Dictionary<uint, List<string>>();
                 StringBuilder selectHomQuery = new StringBuilder("SELECT HomGene,Id FROM Gene WHERE ");
                 int genesQueryCount = 0;
-                foreach (uint gene in genes.Keys)
+
+				foreach (uint gene in genes.Keys)
                 {
                     selectHomQuery.Append($"Id = {gene} OR ");
                     genesQueryCount++;
@@ -142,15 +142,12 @@ namespace Cliquely
                         genesQueryCount = 0;
                     }
                 }
-                
-
-
 
                 genes.Clear();
 
                 foreach(KeyValuePair<uint, List<string>> pair in homGenes)
                 {
-                    genes.Add(pair.Key, pair.Value.ToArray());
+                    genes.Add(pair.Key, pair.Value.Distinct().ToArray());
                 }
             }
 
@@ -201,7 +198,7 @@ namespace Cliquely
             return bacterias.ToArray();
         }
 
-        private static uint[] getGenesForBacteria(DataRow[] i_Rows)
+        private static List<uint> getGenesForBacteria(DataRow[] i_Rows)
         {
             List<uint> genes = new List<uint>();
             foreach (DataRow row in i_Rows)
@@ -209,7 +206,7 @@ namespace Cliquely
                 genes.Add(uint.Parse(row["Gene"].ToString()));
             }
 
-            return genes.ToArray();
+            return genes.ToList();
         }
 
         private static float calculateGeneProbability(string[] i_BacteriasForGene1, string[] i_BacteriasForGene2)
