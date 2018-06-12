@@ -21,6 +21,7 @@ namespace Cliquely
         {
 			genelnkLbl.Text = "Starts searching for a gene for the given fasta sequence.";
 			genelnkLbl.LinkArea = new LinkArea(0, 0);
+			CliquesDGV.DataSource = null;
             Blast.SendRequest(textBoxFasta.Text);
         }
 
@@ -174,12 +175,14 @@ namespace Cliquely
 		private int calculateIncidence(List<uint> i_CliqueVerticesIDs, List<List<uint>> i_CleanedDataReverse)
 		{
 			int count = 0;
+			i_CliqueVerticesIDs.Sort();
 
 			foreach (List<uint> bacteria in i_CleanedDataReverse)
 			{
 				if (bacteria.Count >= i_CliqueVerticesIDs.Count)
 				{
-					int intersectionCount = IntersectSorted(i_CliqueVerticesIDs, bacteria).ToList().Count;
+					
+					var intersectionCount = IntersectSorted(i_CliqueVerticesIDs, bacteria).ToList().Count;
 
 					if (intersectionCount == i_CliqueVerticesIDs.Count)
 					{
@@ -245,7 +248,7 @@ namespace Cliquely
 		private static Dictionary<string, List<uint>> getReversedCleanedDataHom()
 		{
 			var sql = new SqlHelper();
-			var homDataTable = sql.Select("select gene.homgene as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene group by gene.homgene");
+			var homDataTable = sql.Select("select  gene.homgene as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene order by gene.homgene");
 
 			return getReversedCleanedData(homDataTable);
 		}
@@ -253,16 +256,16 @@ namespace Cliquely
 		private static Dictionary<string, List<uint>> getReversedCleanedDataOrtho()
 		{
 			var sql = new SqlHelper();
-			var orthoDataTable = sql.Select("select gene.id as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene group by gene.id");
+			var orthoDataTable = sql.Select("select gene.id as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene order by gene.id");
 
 			return getReversedCleanedData(orthoDataTable);
 		}
 
-		private static Dictionary<string, List<uint>> getReversedCleanedData(DataTable i_HomDataTable)
+		private static Dictionary<string, List<uint>> getReversedCleanedData(DataTable i_DataTable)
 		{
 			var reversedCleanedData = new Dictionary<string, List<uint>>();
 
-			foreach (DataRow row in i_HomDataTable.Rows)
+			foreach (DataRow row in i_DataTable.Rows)
 			{
 				var bacteria = row["Bacteria"].ToString();
 				var gene = uint.Parse(row["Gene"].ToString());
