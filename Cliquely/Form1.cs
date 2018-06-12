@@ -20,6 +20,7 @@ namespace Cliquely
         private void buttonSearchFasta_Click(object sender, EventArgs e)
         {
 			genelnkLbl.Text = "Starts searching for a gene for the given fasta sequence.";
+			genelnkLbl.LinkArea = new LinkArea(0, 0);
             Blast.SendRequest(textBoxFasta.Text);
         }
 
