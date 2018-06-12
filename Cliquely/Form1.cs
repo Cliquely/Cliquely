@@ -15,14 +15,17 @@ namespace Cliquely
         {
             InitializeComponent();
             Blast.Finished += Blast_Finished;
-        }
+
+			comboBoxGeneType.SelectedIndex = 0;
+		}
 
         private void buttonSearchFasta_Click(object sender, EventArgs e)
         {
 			genelnkLbl.Text = "Starts searching for a gene for the given fasta sequence.";
 			genelnkLbl.LinkArea = new LinkArea(0, 0);
 			CliquesDGV.DataSource = null;
-            Blast.SendRequest(textBoxFasta.Text);
+
+			Blast.SendRequest(textBoxFasta.Text);
         }
 
         private void Blast_Finished(string i_RID, TimeSpan i_TimeSinceStarted, List<BlastGene> i_Genes)
@@ -63,8 +66,21 @@ namespace Cliquely
 
 		private void discoverCliques(uint gene)
         {
-			var probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), checkBoxIsHomology.Checked); ;
-			var reversed_cleaned_data = checkBoxIsHomology.Checked ? getReversedCleanedDataHom() : getReversedCleanedDataOrtho(); ;
+			Dictionary<uint, Dictionary<uint, float>> probabilities;
+			Dictionary<string, List<uint>> reversed_cleaned_data;
+
+			var geneType = (string)Invoke(new Func<string>(() => comboBoxGeneType.SelectedItem.ToString()));
+
+			if (geneType == "Homology")
+			{
+				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), true);
+				reversed_cleaned_data = getReversedCleanedDataHom();
+			}
+			else
+			{
+				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), false);
+				reversed_cleaned_data = getReversedCleanedDataOrtho();
+			}
 
 			if (probabilities == null)
 			{
@@ -285,8 +301,9 @@ namespace Cliquely
 		{
 			var sql = new SqlHelper();
 			var dataTable = new DataTable();
+			var geneType = (string)Invoke(new Func<string>(() => comboBoxGeneType.SelectedItem.ToString()));
 
-			if (checkBoxIsHomology.Checked)
+			if (geneType == "Homology")
 			{
 				dataTable = sql.Select($"select details from gene where homgene = {id}");
 			}

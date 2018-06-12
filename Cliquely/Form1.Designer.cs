@@ -34,8 +34,9 @@
 			this.textBoxTreshold = new System.Windows.Forms.TextBox();
 			this.label1 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
-			this.checkBoxIsHomology = new System.Windows.Forms.CheckBox();
 			this.genelnkLbl = new System.Windows.Forms.LinkLabel();
+			this.comboBoxGeneType = new System.Windows.Forms.ComboBox();
+			this.label3 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.CliquesDGV)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -67,12 +68,15 @@
 			// 
 			// CliquesDGV
 			// 
+			this.CliquesDGV.AllowUserToAddRows = false;
+			this.CliquesDGV.AllowUserToDeleteRows = false;
 			this.CliquesDGV.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.CliquesDGV.Location = new System.Drawing.Point(26, 431);
 			this.CliquesDGV.Margin = new System.Windows.Forms.Padding(4);
 			this.CliquesDGV.Name = "CliquesDGV";
+			this.CliquesDGV.ReadOnly = true;
 			this.CliquesDGV.Size = new System.Drawing.Size(1130, 291);
 			this.CliquesDGV.TabIndex = 4;
 			this.CliquesDGV.ColumnAdded += new System.Windows.Forms.DataGridViewColumnEventHandler(this.CliquesDGV_ColumnAdded);
@@ -80,7 +84,7 @@
 			// textBoxTreshold
 			// 
 			this.textBoxTreshold.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-			this.textBoxTreshold.Location = new System.Drawing.Point(138, 251);
+			this.textBoxTreshold.Location = new System.Drawing.Point(151, 251);
 			this.textBoxTreshold.Margin = new System.Windows.Forms.Padding(4);
 			this.textBoxTreshold.Name = "textBoxTreshold";
 			this.textBoxTreshold.Size = new System.Drawing.Size(320, 26);
@@ -108,17 +112,6 @@
 			this.label2.Text = "Probability:";
 			this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
-			// checkBoxIsHomology
-			// 
-			this.checkBoxIsHomology.AutoSize = true;
-			this.checkBoxIsHomology.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-			this.checkBoxIsHomology.Location = new System.Drawing.Point(26, 289);
-			this.checkBoxIsHomology.Name = "checkBoxIsHomology";
-			this.checkBoxIsHomology.Size = new System.Drawing.Size(175, 29);
-			this.checkBoxIsHomology.TabIndex = 2;
-			this.checkBoxIsHomology.Text = "Homology Gene";
-			this.checkBoxIsHomology.UseVisualStyleBackColor = true;
-			// 
 			// genelnkLbl
 			// 
 			this.genelnkLbl.ActiveLinkColor = System.Drawing.Color.Blue;
@@ -133,12 +126,38 @@
 			this.genelnkLbl.Size = new System.Drawing.Size(0, 20);
 			this.genelnkLbl.TabIndex = 6;
 			// 
+			// comboBoxGeneType
+			// 
+			this.comboBoxGeneType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboBoxGeneType.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
+			this.comboBoxGeneType.FormattingEnabled = true;
+			this.comboBoxGeneType.Items.AddRange(new object[] {
+            "Homology",
+            "Orthology"});
+			this.comboBoxGeneType.Location = new System.Drawing.Point(151, 292);
+			this.comboBoxGeneType.Name = "comboBoxGeneType";
+			this.comboBoxGeneType.Size = new System.Drawing.Size(320, 28);
+			this.comboBoxGeneType.TabIndex = 2;
+			// 
+			// label3
+			// 
+			this.label3.AutoSize = true;
+			this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
+			this.label3.Location = new System.Drawing.Point(23, 295);
+			this.label3.Margin = new System.Windows.Forms.Padding(0);
+			this.label3.Name = "label3";
+			this.label3.Size = new System.Drawing.Size(116, 25);
+			this.label3.TabIndex = 8;
+			this.label3.Text = "Gene Type:";
+			this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1182, 745);
-			this.Controls.Add(this.checkBoxIsHomology);
+			this.Controls.Add(this.label3);
+			this.Controls.Add(this.comboBoxGeneType);
 			this.Controls.Add(this.genelnkLbl);
 			this.Controls.Add(this.label2);
 			this.Controls.Add(this.label1);
@@ -164,8 +183,9 @@
         private System.Windows.Forms.TextBox textBoxTreshold;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Label label2;
-		private System.Windows.Forms.CheckBox checkBoxIsHomology;
 		private System.Windows.Forms.LinkLabel genelnkLbl;
+		private System.Windows.Forms.ComboBox comboBoxGeneType;
+		private System.Windows.Forms.Label label3;
 	}
 }
 
