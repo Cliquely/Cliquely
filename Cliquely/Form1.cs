@@ -26,11 +26,10 @@ namespace Cliquely
 			CliquesDGV.DataSource = null;
 
 			Blast.SendRequest(textBoxFasta.Text);
-        }
+		}
 
         private void Blast_Finished(string i_RID, TimeSpan i_TimeSinceStarted, List<BlastGene> i_Genes)
         {
-
 			if (i_Genes == null)
             {
 				Invoke(new Action(() => { genelnkLbl.Text = "Could not find a gene for the given fasta sequence."; }));
@@ -51,10 +50,11 @@ namespace Cliquely
             selectQuery = $"SELECT Gene.HomGene, Gene.Id, Gene.Details, GeneData.Bacteria FROM Gene INNER JOIN GeneData ON Gene.Id = GeneData.Gene WHERE GeneData.Bacteria = \"{bacteriaTable.Rows[0][0]}\"";
 
             DataTable geneTable = sql.Select(selectQuery.ToString());
-			var gene = uint.Parse(geneTable.Rows[0][0].ToString());
+
+			var gene = uint.Parse(geneTable.Rows[0][1].ToString());
 
 			Invoke(new Action(() => {
-				var geneDetails = getGeneLine(gene);
+				var geneDetails = getGeneLine(gene, true);
 				genelnkLbl.Text = $"Gene: {geneDetails} was found most suitable for the given fasta sequence.\nStarts searching for cliques with the given gene.";
 
 				genelnkLbl.LinkArea = new LinkArea(start: genelnkLbl.Text.IndexOf(':') + 2, length: geneDetails.ToString().Length + 1);
@@ -73,13 +73,14 @@ namespace Cliquely
 
 			if (geneType == "Homology")
 			{
-				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), true);
-				reversed_cleaned_data = getReversedCleanedDataHom();
+				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), true);// gets orthoGeneId and return hom genes probabilities.
+				reversed_cleaned_data = getReversedCleanedDataHom(gene); // gets orthoGeneId
+				gene = getHomGeneId(gene); // must be after 'getReversedCleanedDataHom(..)'
 			}
 			else
 			{
 				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), false);
-				reversed_cleaned_data = getReversedCleanedDataOrtho();
+				reversed_cleaned_data = getReversedCleanedDataOrtho(gene);
 			}
 
 			if (probabilities == null)
@@ -119,6 +120,7 @@ namespace Cliquely
 		private string geneFounded(uint gene)
 		{
 			var geneDetails = getGeneLine(gene);
+
 			return $"Gene: {geneDetails} was found most suitable for the given fasta sequence.";
 		}
 
@@ -197,8 +199,9 @@ namespace Cliquely
 			{
 				if (bacteria.Count >= i_CliqueVerticesIDs.Count)
 				{
-					
-					var intersectionCount = IntersectSorted(i_CliqueVerticesIDs, bacteria).ToList().Count;
+					var intersection = IntersectSorted(i_CliqueVerticesIDs, bacteria).ToList();
+					var f = i_CliqueVerticesIDs.Where(x => !intersection.Contains(x));
+					var intersectionCount = intersection.Count;
 
 					if (intersectionCount == i_CliqueVerticesIDs.Count)
 					{
@@ -261,18 +264,18 @@ namespace Cliquely
 			e.Column.FillWeight = 10;
 		}
 
-		private static Dictionary<string, List<uint>> getReversedCleanedDataHom()
+		private static Dictionary<string, List<uint>> getReversedCleanedDataHom(uint geneId)
 		{
 			var sql = new SqlHelper();
-			var homDataTable = sql.Select("select  gene.homgene as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene order by gene.homgene");
+			var homDataTable = sql.Select($"select  gene.homgene as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene where bacteria.bacteria in (SELECT bacteria FROM Bacteria WHERE Gene = {geneId}) order by gene.homgene");
 
 			return getReversedCleanedData(homDataTable);
 		}
 
-		private static Dictionary<string, List<uint>> getReversedCleanedDataOrtho()
+		private static Dictionary<string, List<uint>> getReversedCleanedDataOrtho(uint geneId)
 		{
 			var sql = new SqlHelper();
-			var orthoDataTable = sql.Select("select gene.id as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene order by gene.id");
+			var orthoDataTable = sql.Select($"select gene.id as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene where bacteria.bacteria in (SELECT bacteria FROM Bacteria WHERE Gene = {geneId}) order by gene.id");
 
 			return getReversedCleanedData(orthoDataTable);
 		}
@@ -297,22 +300,27 @@ namespace Cliquely
 			return reversedCleanedData.Select(x => new { key = x.Key, val = x.Value.Distinct().ToList() }).ToDictionary(x => x.key, x => x.val);
 		}
 
-		private string getGeneLine(uint id)
+		private string getGeneLine(uint id, bool enforceOrthology = false)
 		{
+			DataTable dataTable;
 			var sql = new SqlHelper();
-			var dataTable = new DataTable();
 			var geneType = (string)Invoke(new Func<string>(() => comboBoxGeneType.SelectedItem.ToString()));
 
-			if (geneType == "Homology")
-			{
-				dataTable = sql.Select($"select details from gene where homgene = {id}");
-			}
-			else
+			if (enforceOrthology || geneType != "Homology")
 			{
 				dataTable = sql.Select($"select details from gene where id = {id}");
 			}
+			else
+			{
+				dataTable = sql.Select($"select details from gene where homgene = {id}");
+			}
 
 			return dataTable.Rows[0][0].ToString();
+		}
+
+		private uint getHomGeneId(uint ortoGeneId)
+		{
+			return uint.Parse(new SqlHelper().Select($"select homgene from gene where id = {ortoGeneId}").Rows[0][0].ToString());
 		}
 	}
 }
