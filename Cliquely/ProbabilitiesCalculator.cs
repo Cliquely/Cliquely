@@ -24,7 +24,7 @@ namespace Cliquely
 				bacteriasForGene.Add(row.Field<string>("Bacteria"));
 			}
 
-			var cleanDataTable = GetCleanedDataTable(i_Gene, sql, bacteriasForGene);
+			var cleanDataTable = sql.Select($"select * from bacteria where bacteria.bacteria in (select bacteria from bacteria where gene = {i_Gene}) or bacteria.gene = {i_Gene}");
 
 			foreach (string bacteria in bacteriasForGene)
 			{
@@ -121,37 +121,6 @@ namespace Cliquely
 			}
 
 			return null;
-		}
-
-		private static DataTable GetCleanedDataTable(uint i_Gene, SqlHelper sql, List<string> bacteriasForGene)
-		{
-			var cleanDataTable = new DataTable();
-			var selectQuery = new StringBuilder($"SELECT * FROM Bacteria WHERE Gene = {i_Gene } OR ");
-			var i = 0;
-
-			foreach (string bacteria in bacteriasForGene)
-			{
-				selectQuery.Append($"Bacteria = \"{bacteria}\" OR ");
-				i++;
-
-				if(i == 998)
-				{
-					selectQuery.Remove(selectQuery.Length - 3, 3);
-					cleanDataTable.Merge(sql.Select(selectQuery.ToString()));
-
-					selectQuery.Clear();
-					selectQuery.Append($"SELECT * FROM Bacteria WHERE Gene = {i_Gene } OR ");
-					i = 0;
-				}
-			}
-
-			if (i > 0)
-			{
-				selectQuery.Remove(selectQuery.Length - 3, 3);
-				cleanDataTable.Merge(sql.Select(selectQuery.ToString()));
-			}
-
-			return cleanDataTable;
 		}
 
 		private static Dictionary<uint, string[]> ConvertOrthoGenesToHomGenes(Dictionary<uint, string[]> potentialGenes)
