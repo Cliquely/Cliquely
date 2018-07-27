@@ -9,7 +9,8 @@ namespace Cliquely
     public class DiscoverCliques
     {
         uint gene;
-        Dictionary<uint, Dictionary<uint, float>> probabilities;
+		Random Rand { get; } = new Random();
+		Dictionary<uint, Dictionary<uint, float>> probabilities;
 
         public List<List<uint>> Cliques;
 
@@ -51,7 +52,7 @@ namespace Cliquely
                 return;
             }
 
-            uint pivot = selectMaximumDegreeVertex(i_PossibleCliqueVertices.Union(i_ExcludedVertices));
+            uint pivot = selectRandomVertex(i_PossibleCliqueVertices.Union(i_ExcludedVertices));
 
             List<uint> enumerableVertices = i_PossibleCliqueVertices.Except(getNeighbours(pivot)).ToList();
 
@@ -84,9 +85,16 @@ namespace Cliquely
 
         private uint selectMaximumDegreeVertex(IEnumerable<uint> i_Union)
         {
-            int maxDegree = probabilities.Where(e => i_Union.Contains(e.Key)).Max(e => e.Value.Count);
+			int maxDegree = probabilities.Where(e => i_Union.Contains(e.Key)).Max(e => e.Value.Count);
 
             return probabilities.First(e => i_Union.Contains(e.Key) & e.Value.Count == maxDegree).Key;
-        }
-    }
+		}
+
+		private uint selectRandomVertex(IEnumerable<uint> i_Union)
+		{
+			var unionList = i_Union.ToList();
+
+			return unionList[Rand.Next(0, unionList.Count)];
+		}
+	}
 }
