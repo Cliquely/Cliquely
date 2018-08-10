@@ -100,11 +100,11 @@ namespace Cliquely
 
 			Invoke(new Action(() => { genelnkLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene (loading):"; }));
 
-			/*if (discoverCliques.Cliques.Count <= 100)
+			if (discoverCliques.Cliques.Count <= 100)
 			{
 				displayCliquesInGridView(discoverCliques.Cliques, gene, matchingPercentage, reversed_cleaned_data);
 			}
-			else*/
+			else
 			{
 				exportCliquesToCSVFile(discoverCliques.Cliques, gene, matchingPercentage, reversed_cleaned_data);
 			}
@@ -146,8 +146,6 @@ namespace Cliquely
 
                 row.ItemArray = cliqueRowItems.ToArray();
 
-                makeCsvCompatible(row);
-
                 table.Rows.Add(row);
             }
 
@@ -156,14 +154,6 @@ namespace Cliquely
 				CliquesDGV.DataSource = table;
 			}));
 		}
-
-        private void makeCsvCompatible(DataRow row)
-        {
-            for (var i = 0; i < row.ItemArray.Length; i++)
-            {
-                row.ItemArray[i] = $"\"{row.ItemArray[i]}\"";
-            }
-        }
 
         private List<string> getCliqueRowItems(List<uint> clique, uint gene, float matchingPercentage, Dictionary<string, List<uint>> reversed_cleaned_data)
 		{
@@ -188,7 +178,7 @@ namespace Cliquely
 			var csv = new StringBuilder();
 
 			csv.AppendLine("Gene, Match, Probability, Incidence, Count");
-			cliques.ForEach(clique => csv.AppendLine(string.Join(",", getCliqueRowItems(clique, gene, matchingPercentage, reversed_cleaned_data))));
+			cliques.ForEach(clique => csv.AppendLine(string.Join(",", makeCsvCompatible(getCliqueRowItems(clique, gene, matchingPercentage, reversed_cleaned_data)))));
 
 			using (var writer = new StreamWriter("Cliques.csv"))
 			{
@@ -203,7 +193,17 @@ namespace Cliquely
 			}));
 		}
 
-		private int calculateIncidence(List<uint> i_CliqueVerticesIDs, List<List<uint>> i_CleanedDataReverse)
+        private List<string> makeCsvCompatible(List<string> items)
+        {
+            for (var i = 0; i < items.Count; i++)
+            {
+                items[i] = $"\"{items[i]}\"";
+            }
+
+            return items;
+        }
+
+        private int calculateIncidence(List<uint> i_CliqueVerticesIDs, List<List<uint>> i_CleanedDataReverse)
 		{
 			int count = 0;
 			i_CliqueVerticesIDs.Sort();
@@ -313,23 +313,36 @@ namespace Cliquely
 			return reversedCleanedData.Select(x => new { key = x.Key, val = x.Value.Distinct().ToList() }).ToDictionary(x => x.key, x => x.val);
 		}
 
+
+        Dictionary<uint, string> geneLines = new Dictionary<uint, string>();
+
 		private string getGeneLine(uint id, bool enforceOrthology = false)
 		{
-			DataTable dataTable;
-			var sql = new SqlHelper();
-			var geneType = (string)Invoke(new Func<string>(() => comboBoxGeneType.SelectedItem.ToString()));
+            if (!geneLines.ContainsKey(id))
+            {
+                geneLines.Add(id, getGeneLineFromDB(id, enforceOrthology));
+            }
 
-			if (enforceOrthology || geneType != "Homology")
-			{
-				dataTable = sql.Select($"select details from gene where id = {id}");
-			}
-			else
-			{
-				dataTable = sql.Select($"select details from gene where homgene = {id}");
-			}
-
-			return dataTable.Rows[0][0].ToString();
+            return geneLines[id];
 		}
+
+        private string getGeneLineFromDB(uint id, bool enforceOrthology = false)
+        {
+            DataTable dataTable;
+            var sql = new SqlHelper();
+            var geneType = (string)Invoke(new Func<string>(() => comboBoxGeneType.SelectedItem.ToString()));
+
+            if (enforceOrthology || geneType != "Homology")
+            {
+                dataTable = sql.Select($"select details from gene where id = {id}");
+            }
+            else
+            {
+                dataTable = sql.Select($"select details from gene where homgene = {id}");
+            }
+
+            return dataTable.Rows[0][0].ToString();
+        }
 
 		private uint getHomGeneId(uint ortoGeneId)
 		{
