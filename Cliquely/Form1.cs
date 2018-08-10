@@ -61,10 +61,10 @@ namespace Cliquely
 				genelnkLbl.LinkClicked += (sender, e) => System.Diagnostics.Process.Start($"https://www.ncbi.nlm.nih.gov/protein/{blastGene.AccessionId}");
 			}));
 
-			discoverCliques(gene);
+			discoverCliques(gene, blastGene.MatchingPercentage);
         }
 
-		private void discoverCliques(uint gene)
+		private void discoverCliques(uint gene, float matchingPercentage)
         {
 			Dictionary<uint, Dictionary<uint, float>> probabilities;
 			Dictionary<string, List<uint>> reversed_cleaned_data;
@@ -100,13 +100,13 @@ namespace Cliquely
 
 			Invoke(new Action(() => { genelnkLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene (loading):"; }));
 
-			if (discoverCliques.Cliques.Count <= 100)
+			/*if (discoverCliques.Cliques.Count <= 100)
 			{
-				displayCliquesInGridView(discoverCliques.Cliques, gene, reversed_cleaned_data);
+				displayCliquesInGridView(discoverCliques.Cliques, gene, matchingPercentage, reversed_cleaned_data);
 			}
-			else
+			else*/
 			{
-				exportCliquesToCSVFile(discoverCliques.Cliques, gene, reversed_cleaned_data);
+				exportCliquesToCSVFile(discoverCliques.Cliques, gene, matchingPercentage, reversed_cleaned_data);
 			}
 
 			Invoke(new Action(() => { genelnkLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene:"; }));
@@ -124,44 +124,57 @@ namespace Cliquely
 			return $"Gene: {geneDetails} was found most suitable for the given fasta sequence.";
 		}
 
-		private void displayCliquesInGridView(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
+		private void displayCliquesInGridView(List<List<uint>> cliques, uint gene, float matchingPercentage, Dictionary<string, List<uint>> reversed_cleaned_data)
 		{
 			DataTable table = new DataTable();
 
 			table.Columns.Add("Gene");
+            table.Columns.Add("Match");
 			table.Columns.Add("Probability");
 			table.Columns.Add("Incidence");
 			table.Columns.Add("Count");
 
 			foreach (var clique in cliques)
-			{
-				var row = table.NewRow();
-				var cliqueRowItems = getCliqueRowItems(clique, gene, reversed_cleaned_data);
+            {
+                var row = table.NewRow();
+                var cliqueRowItems = getCliqueRowItems(clique, gene, matchingPercentage, reversed_cleaned_data);
 
-				while (clique.Count > table.Columns.Count - 4)
-				{
-					table.Columns.Add("Gene " + (table.Columns.Count - 3));
-				}
+                while (clique.Count > table.Columns.Count - 4)
+                {
+                    table.Columns.Add("Gene " + (table.Columns.Count - 3));
+                }
 
-				row.ItemArray = cliqueRowItems.ToArray();
-				table.Rows.Add(row);
-			}
+                row.ItemArray = cliqueRowItems.ToArray();
 
-			this.Invoke(new Action(() =>
+                makeCsvCompatible(row);
+
+                table.Rows.Add(row);
+            }
+
+            this.Invoke(new Action(() =>
 			{
 				CliquesDGV.DataSource = table;
 			}));
 		}
 
-		private List<string> getCliqueRowItems(List<uint> clique, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
+        private void makeCsvCompatible(DataRow row)
+        {
+            for (var i = 0; i < row.ItemArray.Length; i++)
+            {
+                row.ItemArray[i] = $"\"{row.ItemArray[i]}\"";
+            }
+        }
+
+        private List<string> getCliqueRowItems(List<uint> clique, uint gene, float matchingPercentage, Dictionary<string, List<uint>> reversed_cleaned_data)
 		{
 			var cliqueRowItems = new List<string>();
 
 			clique.Sort();
 			int incidence = calculateIncidence(clique, reversed_cleaned_data.Values.ToList());
 
-			cliqueRowItems.Add(getGeneLine(gene));
-			cliqueRowItems.Add(textBoxTreshold.Text);
+            cliqueRowItems.Add(getGeneLine(gene));
+            cliqueRowItems.Add(matchingPercentage.ToString());
+            cliqueRowItems.Add(textBoxTreshold.Text);
 			cliqueRowItems.Add(incidence.ToString());
 
 			cliqueRowItems.Add(clique.Count.ToString());
@@ -170,12 +183,12 @@ namespace Cliquely
 			return cliqueRowItems;
 		}
 
-		private void exportCliquesToCSVFile(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
+		private void exportCliquesToCSVFile(List<List<uint>> cliques, uint gene, float matchingPercentage, Dictionary<string, List<uint>> reversed_cleaned_data)
 		{
 			var csv = new StringBuilder();
 
-			csv.AppendLine("Gene, Probability, Incidence, Count");
-			cliques.ForEach(clique => csv.AppendLine(string.Join(",", getCliqueRowItems(clique, gene, reversed_cleaned_data))));
+			csv.AppendLine("Gene, Match, Probability, Incidence, Count");
+			cliques.ForEach(clique => csv.AppendLine(string.Join(",", getCliqueRowItems(clique, gene, matchingPercentage, reversed_cleaned_data))));
 
 			using (var writer = new StreamWriter("Cliques.csv"))
 			{
