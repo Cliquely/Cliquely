@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlastFromNCBI", "BlastFromN
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cliquely", "Cliquely\Cliquely.csproj", "{919EFB2E-82FA-4060-A9A6-E5FA2CCAE85E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BacteriaNetworks", "BacteriaNetworks\BacteriaNetworks.csproj", "{07862864-C1E3-45D5-8120-428B3385026D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BacteriaNetworksTests", "BacteriaNetworksTests\BacteriaNetworksTests.csproj", "{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +35,22 @@ Global
 		{919EFB2E-82FA-4060-A9A6-E5FA2CCAE85E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{919EFB2E-82FA-4060-A9A6-E5FA2CCAE85E}.Release|x64.ActiveCfg = Release|Any CPU
 		{919EFB2E-82FA-4060-A9A6-E5FA2CCAE85E}.Release|x64.Build.0 = Release|Any CPU
+		{07862864-C1E3-45D5-8120-428B3385026D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07862864-C1E3-45D5-8120-428B3385026D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07862864-C1E3-45D5-8120-428B3385026D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{07862864-C1E3-45D5-8120-428B3385026D}.Debug|x64.Build.0 = Debug|Any CPU
+		{07862864-C1E3-45D5-8120-428B3385026D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07862864-C1E3-45D5-8120-428B3385026D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07862864-C1E3-45D5-8120-428B3385026D}.Release|x64.ActiveCfg = Release|Any CPU
+		{07862864-C1E3-45D5-8120-428B3385026D}.Release|x64.Build.0 = Release|Any CPU
+		{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}.Debug|x64.Build.0 = Debug|Any CPU
+		{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}.Release|x64.ActiveCfg = Release|Any CPU
+		{EEAEE08C-3C93-4AE8-B3DC-F60AA634BDE2}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
