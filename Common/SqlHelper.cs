@@ -1,16 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Data.SQLite;
-using System.Web;
 
 namespace Cliquely
 {
-    class SqlHelper
+	class SqlHelper
     {
         SqlHandler m_Connection;
-        const string path = @"Proteins.data";
-        public SqlHelper()
+	    private string path = @"Proteins.data";
+
+		public string Path
+	    {
+		    get => path;
+		    set
+		    {
+			    path = value;
+			    m_Connection = new SqlHandler(path);
+
+		    }
+	    }
+
+	    public SqlHelper(string path = @"Proteins.data")
         {
             m_Connection = new SqlHandler(path);
         }
@@ -20,7 +29,7 @@ namespace Cliquely
         {
             m_Connection.OpenConnection();
 
-            SQLiteCommand cmd = new SQLiteCommand(i_Query, m_Connection.Connection);
+            var cmd = new SQLiteCommand(i_Query, m_Connection.Connection);
 
             cmd.ExecuteNonQuery();
 
@@ -29,13 +38,13 @@ namespace Cliquely
 
         public DataTable Select(string i_Query)
         {
-            DataTable table = new DataTable();
+            var table = new DataTable();
 
             m_Connection.OpenConnection();
 
-            SQLiteCommand cmd = new SQLiteCommand(i_Query, m_Connection.Connection);
+            var cmd = new SQLiteCommand(i_Query, m_Connection.Connection);
 
-            SQLiteDataReader dataReader = cmd.ExecuteReader();
+            var dataReader = cmd.ExecuteReader();
 
             table.Load(dataReader);
 
