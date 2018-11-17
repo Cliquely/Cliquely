@@ -86,7 +86,7 @@ namespace BacteriaNetworks
 					    if (k == 1000)
 					    {
 						    var query = queryBuilder.Replace(',', ';', queryBuilder.Length - 1, 1).ToString();
-						    new SqlHelper("BacterialNetwork.data").Edit(query);
+						    new SqlHelper(BacterialNetworkDbWriter.DefaultDB).Edit(query);
 
 						    queryBuilder.Clear();
 						    queryBuilder.Append(initQuery);
@@ -95,7 +95,13 @@ namespace BacteriaNetworks
 				    }
 			    }
 		    }
-	    }
+
+		    if (k > 0)
+		    {
+			    var query = queryBuilder.Replace(',', ';', queryBuilder.Length - 1, 1).ToString();
+			    new SqlHelper(BacterialNetworkDbWriter.DefaultDB).Edit(query);
+		    }
+		}
 
 	    private void AddProteinsProbabilityToNetwork(float proteinsProbability, uint firstProteinId, uint secondProteinId)
 	    {

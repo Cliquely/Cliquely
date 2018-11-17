@@ -6,7 +6,9 @@ namespace BacteriaNetworks
 {
 	public class BacterialNetworkDbWriter
 	{
-		private SqlHelper SqlHelper { get; } = new SqlHelper("BacterialNetwork.data");
+		public const string DefaultDB = "BacterialNetwork.data";
+
+		private SqlHelper SqlHelper { get; } = new SqlHelper(DefaultDB);
 
 		public void Write(List<uint> proteins, Dictionary<uint, Dictionary<uint, float>> bacterialNetwork)
 		{
@@ -40,6 +42,11 @@ namespace BacteriaNetworks
 					}
 				}
 			}
+
+			if (i > 0)
+			{
+				ExecuteInsertIntoQueryBuilder(queryBuilder);
+			}
 		}
 
 		private void ExecuteInsertIntoQueryBuilder(StringBuilder queryBuilder)
@@ -66,6 +73,11 @@ namespace BacteriaNetworks
 					queryBuilder.Append(initQuery);
 					i = 0;
 				}
+			}
+
+			if (i > 0)
+			{
+				ExecuteInsertIntoQueryBuilder(queryBuilder);
 			}
 		}
 	}
