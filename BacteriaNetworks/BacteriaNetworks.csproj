@@ -67,7 +67,12 @@
       <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.SQLite, Version=1.0.105.2, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\BacterialNetworkCalculator\bin\Debug\System.Data.SQLite.dll</HintPath>
+    </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
@@ -78,8 +83,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BacterialNetworkCalculator.cs" />
+    <Compile Include="BacterialNetworkDbWriter.cs" />
+    <Compile Include="BacterialNetworkToGeneConverter.cs" />
     <Compile Include="BacteriaNetworks.cs" />
     <Compile Include="BronKerboschAlg.cs" />
+    <Compile Include="CleanedDataReader.cs" />
+    <Compile Include="CleanedDataReverseReader.cs" />
     <Compile Include="Gene.cs" />
     <Compile Include="NetworkViewer.cs">
       <SubType>UserControl</SubType>
@@ -116,6 +126,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <Import Project="..\Common\Common.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

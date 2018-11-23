@@ -26,15 +26,15 @@ namespace Cliquely
 
 			var cleanDataTable = sql.Select($"select * from bacteria where bacteria.bacteria in (select bacteria from bacteria where gene = {i_Gene}) or bacteria.gene = {i_Gene}");
 
-			foreach (string bacteria in bacteriasForGene)
+			foreach (var bacteria in bacteriasForGene)
 			{
 				var bacteriaRows = cleanDataTable.Select("Bacteria='" + bacteria.ToString() + "'");
 				reversed_cleaned_data.Add(bacteria, getGenesForBacteria(bacteriaRows));
 			}
 
-			foreach (string bacteria in bacteriasForGene)
+			foreach (var bacteria in bacteriasForGene)
 			{
-				foreach (uint gene in reversed_cleaned_data[bacteria])
+				foreach (var gene in reversed_cleaned_data[bacteria])
 				{
 					if (!genesToUse.ContainsKey(gene))
 					{
@@ -143,8 +143,8 @@ namespace Cliquely
 
 					foreach (DataRow row in homDataTable.Rows)
 					{
-						uint geneId = (uint)row.Field<long>("Id");
-						uint homGeneId = (uint)row.Field<long>("HomGene");
+						var geneId = (uint)row.Field<long>("Id");
+						var homGeneId = (uint)row.Field<long>("HomGene");
 
 						if (homGenes.ContainsKey(homGeneId))
 						{
@@ -168,8 +168,8 @@ namespace Cliquely
 
 				foreach (DataRow row in homDataTable.Rows)
 				{
-					uint geneId = (uint)row.Field<long>("Id");
-					uint homGeneId = (uint)row.Field<long>("HomGene");
+					var geneId = (uint)row.Field<long>("Id");
+					var homGeneId = (uint)row.Field<long>("HomGene");
 
 					if (homGenes.ContainsKey(homGeneId))
 					{
@@ -184,7 +184,7 @@ namespace Cliquely
 
 			var potentialHomGenes = new Dictionary<uint, string[]>();
 
-			foreach (KeyValuePair<uint, List<string>> pair in homGenes)
+			foreach (var pair in homGenes)
 			{
 				potentialHomGenes.Add(pair.Key, pair.Value.Distinct().ToArray());
 			}
@@ -194,13 +194,15 @@ namespace Cliquely
 
 		private static Dictionary<uint, float> calculateProbabilitiesWithGenes(uint i_Gene, Dictionary<uint, string[]> i_BacteriasForGene, float i_TreshHoldProbability)
         {
-            Dictionary<uint, float> probabilities = new Dictionary<uint, float>(i_BacteriasForGene.Count);
-            foreach (uint j in i_BacteriasForGene.Keys)
+            var probabilities = new Dictionary<uint, float>(i_BacteriasForGene.Count);
+
+	        foreach (var j in i_BacteriasForGene.Keys)
             {
                 if (i_Gene != j)
                 {
-                    float probability = calculateGeneProbability(i_BacteriasForGene[i_Gene], i_BacteriasForGene[j]);
-                    if (probability >= i_TreshHoldProbability)
+                    var probability = CalculateGeneProbability(i_BacteriasForGene[i_Gene], i_BacteriasForGene[j]);
+
+	                if (probability >= i_TreshHoldProbability)
                     {
                         probabilities[j] = probability;
                     }
@@ -210,34 +212,22 @@ namespace Cliquely
             return probabilities;
         }
 
-        private static string[] getBacteriasForGene(DataRow[] i_Rows)
+        private static string[] getBacteriasForGene(IEnumerable<DataRow> i_Rows)
         {
-            List<string> bacterias = new List<string>();
-            foreach(DataRow row in i_Rows)
-            {
-                bacterias.Add(row["Bacteria"].ToString());
-            }
-
-            return bacterias.ToArray();
+	        return i_Rows.Select(row => row["Bacteria"].ToString()).ToArray();
         }
 
-        private static List<uint> getGenesForBacteria(DataRow[] i_Rows)
+        private static List<uint> getGenesForBacteria(IEnumerable<DataRow> i_Rows)
         {
-            List<uint> genes = new List<uint>();
-            foreach (DataRow row in i_Rows)
-            {
-                genes.Add(uint.Parse(row["Gene"].ToString()));
-            }
-
-            return genes.ToList();
+	        return i_Rows.Select(row => uint.Parse(row["Gene"].ToString())).ToList();
         }
 
-        private static float calculateGeneProbability(string[] i_BacteriasForGene1, string[] i_BacteriasForGene2)
+        public static float CalculateGeneProbability(IReadOnlyCollection<string> i_BacteriasForGene1, IReadOnlyCollection<string> i_BacteriasForGene2)
         {
-            int amountOfIntersectedBacterias = i_BacteriasForGene1.Intersect(i_BacteriasForGene2).Count();
+            var amountOfIntersectedBacterias = i_BacteriasForGene1.Intersect(i_BacteriasForGene2).Count();
 
             float numerator = amountOfIntersectedBacterias * amountOfIntersectedBacterias;
-            float denominator = i_BacteriasForGene1.Length * i_BacteriasForGene2.Length;
+            float denominator = i_BacteriasForGene1.Count * i_BacteriasForGene2.Count;
 
             return numerator / denominator;
         }

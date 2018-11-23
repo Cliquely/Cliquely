@@ -20,7 +20,7 @@ namespace BacteriaNetworks
 
         public override bool Equals(object obj)
         {
-            return ((Gene)obj).Id == Id;
+            return obj != null && ((Gene)obj).Id == Id;
         }
     }
 }
