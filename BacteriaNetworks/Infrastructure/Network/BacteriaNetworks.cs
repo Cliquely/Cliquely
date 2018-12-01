@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using BacteriaNetworks.Infrastructure.Network.Calculators;
+using BacteriaNetworks.Infrastructure.Network.Readers;
 
-namespace BacteriaNetworks
+namespace BacteriaNetworks.Infrastructure.Network
 {
 	public partial class BacteriaNetworks
     {
@@ -14,21 +15,17 @@ namespace BacteriaNetworks
 
         private List<Gene> GetGenesOfBacteria(string bacteria, float minimumProbability)
         {
-            var cleanedDataReader = new CleanedDataReader();
-	        var bacteriaForProteins = cleanedDataReader.ReadAllBacteriaForProteins();
-
 			var cleanedDataReverseReader = new CleanedDataReverseReader();
 	        var proteinsForBacteria = cleanedDataReverseReader.ReadProteinsForBacteriaByName(bacteria);
 
-	        var bacterialNetworkCalculator = new BacterialNetworkCalculator(bacteriaForProteins)
-	        {
-		        ThresholdProbability = minimumProbability
-	        };
+			var cleanedDataReader = new CleanedDataReader();
+	        var bacteriaForProteins = cleanedDataReader.ReadAllBacteriaForProteins();
 
+	        var bacterialNetworkCalculator=  new RunTimeBacterialNetworkCalculator(bacteriaForProteins){ThresholdProbability = minimumProbability};
 	        var bacterialNetwork = bacterialNetworkCalculator.CalculateForOneBacteria(proteinsForBacteria);
 
 	        return ConvertBacterialNetworkToGeneList(bacterialNetwork);
-        }
+		}
 
 	    private List<Gene> ConvertBacterialNetworkToGeneList(Dictionary<uint, Dictionary<uint, float>> bacterialNetwork)
 	    {

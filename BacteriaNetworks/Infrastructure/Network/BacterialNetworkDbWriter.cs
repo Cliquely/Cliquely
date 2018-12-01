@@ -2,7 +2,7 @@
 using System.Text;
 using Cliquely;
 
-namespace BacteriaNetworks
+namespace BacteriaNetworks.Infrastructure.Network
 {
 	public class BacterialNetworkDbWriter
 	{

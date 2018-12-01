@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)ProbabilitiesCalculator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SqlHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BulkSqlHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SqlHelper.cs" />
   </ItemGroup>
 </Project>

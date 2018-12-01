@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace BacteriaNetworks
+namespace BacteriaNetworks.Infrastructure
 {
     public class BronKerboschAlg
     {

@@ -4,7 +4,7 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 
-namespace BacteriaNetworks
+namespace BacteriaNetworks.Infrastructure.Network.Readers
 {
 	public class CleanedDataReader
 	{

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using BacteriaNetworks.Infrastructure;
 
 namespace BacteriaNetworks.Tests
 {

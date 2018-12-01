@@ -4,7 +4,7 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 
-namespace BacteriaNetworks
+namespace BacteriaNetworks.Infrastructure.Network.Readers
 {
 	public class CleanedDataReverseReader
 	{
@@ -52,6 +52,49 @@ namespace BacteriaNetworks
 			return line.Split('\t')[0];
 		}
 
+		public List<string> ReadAllBacteria()
+		{
+			try
+			{
+				using (var cleanedDataReverseFileReader = new FileStream(CleanDataReverseHomFile, FileMode.Open))
+				using (var cleanedDataReverseStreamReader = new StreamReader(cleanedDataReverseFileReader))
+				{
+					return ParseAllBacteria(cleanedDataReverseStreamReader);
+				}
+			}
+			catch (Exception e)
+			{
+				throw new Exception("The format of cleaned data reverse file is wrong.", e);
+			}
+		}
+
+		private List<string> ParseAllBacteria(StreamReader reader)
+		{
+			var bacterias = new List<string>();
+
+			SkipInfoLines(reader);
+
+			var line = reader.ReadLine();
+
+			while (line != null)
+			{
+				var bacteria = ParseBacteria(line);
+				bacterias.Add(bacteria);
+
+				line = reader.ReadLine();
+			}
+
+			return bacterias;
+		}
+
+		private string ParseBacteria(string line)
+		{
+			var cleanedDataReverseLineArray = line.Split('\t');
+			var bacteria= cleanedDataReverseLineArray[0];
+
+			return bacteria;
+		}
+
 		public Dictionary<string, List<uint>> ReadAllBacteriaForProteins()
 		{
 			try
@@ -64,7 +107,7 @@ namespace BacteriaNetworks
 			}
 			catch (Exception e)
 			{
-				throw new Exception("The format of cleaned data file is wrong.", e);
+				throw new Exception("The format of cleaned data reverse file is wrong.", e);
 			}
 		}
 
@@ -89,9 +132,9 @@ namespace BacteriaNetworks
 
 		private KeyValuePair<string, List<uint>> ParseProteinsForBacteriasPair(string line)
 		{
-			var cleanedDataLineArray = line.Split('\t');
-			var bacteriaName = cleanedDataLineArray[0];
-			var proteins = cleanedDataLineArray[2].Split(' ').Select(uint.Parse).ToList();
+			var cleanedDataReverseLineArray = line.Split('\t');
+			var bacteriaName = cleanedDataReverseLineArray[0];
+			var proteins = cleanedDataReverseLineArray[2].Split(' ').Select(uint.Parse).ToList();
 
 			return new KeyValuePair<string, List<uint>>(bacteriaName, proteins);
 		}

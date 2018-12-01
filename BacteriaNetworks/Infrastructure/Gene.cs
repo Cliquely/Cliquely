@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace BacteriaNetworks
+namespace BacteriaNetworks.Infrastructure
 {
     public class Gene
     {
