@@ -36,7 +36,6 @@ namespace BacteriaNetworks
 			this.btnSearchNetwork = new System.Windows.Forms.Button();
 			this.lblInfo = new System.Windows.Forms.Label();
 			this.cmbBacteria = new BacteriaNetworks.Infrastructure.AutoCompleteComboBox();
-			this.networkViewer1 = new BacteriaNetworks.NetworkViewer();
 			this.SuspendLayout();
 			// 
 			// label1
@@ -106,24 +105,11 @@ namespace BacteriaNetworks
 			this.cmbBacteria.Size = new System.Drawing.Size(1011, 28);
 			this.cmbBacteria.TabIndex = 0;
 			// 
-			// networkViewer1
-			// 
-			this.networkViewer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.networkViewer1.Location = new System.Drawing.Point(2, 211);
-			this.networkViewer1.Margin = new System.Windows.Forms.Padding(0);
-			this.networkViewer1.Name = "networkViewer1";
-			this.networkViewer1.Size = new System.Drawing.Size(1182, 540);
-			this.networkViewer1.TabIndex = 7;
-			this.networkViewer1.UseWaitCursor = true;
-			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1182, 753);
-			this.Controls.Add(this.networkViewer1);
 			this.Controls.Add(this.lblInfo);
 			this.Controls.Add(this.btnSearchNetwork);
 			this.Controls.Add(this.cmbFilter);
@@ -144,6 +130,5 @@ namespace BacteriaNetworks
 		private System.Windows.Forms.ComboBox cmbFilter;
 		private System.Windows.Forms.Button btnSearchNetwork;
 		private System.Windows.Forms.Label lblInfo;
-		private NetworkViewer networkViewer1;
 	}
 }
