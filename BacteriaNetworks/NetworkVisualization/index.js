@@ -32,21 +32,36 @@ $("document").ready(function(){
     };
     var options = {
         nodes: {
-            shape: 'dot',
-            size: 30,
-            font: {
-                size: 32,
-                color: '#000'
-            },
-            borderWidth: 2
+          shape: 'dot',
+          scaling: {
+            min: 10,
+            max: 30
+          },
+          font: {
+            size: 12,
+            face: 'Tahoma'
+          }
         },
         edges: {
-            color:{
-                inherit: true
-            },
-            width: 2
+          width: 0.15,
+          color: {inherit: 'from'},
+          smooth: {
+            type: 'continuous'
+          }
+        },
+        physics: {
+          stabilization: false,
+          barnesHut: {
+            gravitationalConstant: -80000,
+            springConstant: 0.001,
+            springLength: 200
+          }
+        },
+        interaction: {
+          tooltipDelay: 200,
+          hideEdgesOnDrag: false
         }
-    };
+      };
 
     // initialize your network!
     var network = new vis.Network(container, data, options);
