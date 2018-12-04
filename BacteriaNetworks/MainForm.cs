@@ -15,13 +15,15 @@ namespace BacteriaNetworks
         private List<string> BacteriaAbbrList { get; }
         private List<Bacteria> BacteriaList { get; }
 
-        private ChromiumWebBrowser networkViewer;
-        private readonly string baseAddress = $"file:///{Directory.GetCurrentDirectory()}/NetworkVisualization/index.html";
+        private ChromiumWebBrowser NetworkViewer { get; set; }
+        private string BaseAddress { get; }
 
         public MainForm()
         {
             InitializeComponent();
-            initializeNetworkViewer(baseAddress);
+
+	        BaseAddress = $"file:///{Directory.GetCurrentDirectory()}/NetworkVisualization/index.html";
+			InitializeNetworkViewer(BaseAddress);
 
             var cleanedDataReverseReader = new CleanedDataReverseReader();
             BacteriaAbbrList = cleanedDataReverseReader.ReadAllBacteria();
@@ -35,9 +37,9 @@ namespace BacteriaNetworks
             lblInfo.Text = string.Empty;
         }
 
-        private void initializeNetworkViewer(string baseAddress)
+        private void InitializeNetworkViewer(string baseAddress)
         {
-            networkViewer = new ChromiumWebBrowser(baseAddress)
+            NetworkViewer = new ChromiumWebBrowser(baseAddress)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Location = new System.Drawing.Point(2, 211),
@@ -47,7 +49,7 @@ namespace BacteriaNetworks
                 UseWaitCursor = true,
             };
 
-            Controls.Add(networkViewer);
+            Controls.Add(NetworkViewer);
         }
 
         private void CmbFilterOnSelectedIndexChanged(object sender, EventArgs e)
@@ -104,7 +106,7 @@ namespace BacteriaNetworks
                         return distinctGenes;
                     }).Distinct().ToList();
 
-                loadNetwork(genes, network);
+                LoadNetwork(genes, network);
             }
             catch (ArgumentException)
             {
@@ -136,13 +138,13 @@ namespace BacteriaNetworks
             throw new ArgumentException();
         }
 
-        private void loadNetwork(List<Gene> genes, List<List<Gene>> cliques)
+        private void LoadNetwork(List<Gene> genes, List<List<Gene>> cliques)
         {
             var jsonGenes = JsonConvert.SerializeObject(genes.Select(gene => gene.Id));
             var jsonCliques = JsonConvert.SerializeObject(cliques.Select(clique => clique.Select(gene => gene.Id)));
-            var address = $"{baseAddress}?genes={jsonGenes}&cliques={jsonCliques}";
+            var address = $"{BaseAddress}?genes={jsonGenes}&cliques={jsonCliques}";
 
-            networkViewer.Load(address);
+            NetworkViewer.Load(address);
         }
 
         private void UpdateInfo(string msg)

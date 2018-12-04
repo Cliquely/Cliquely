@@ -16,9 +16,12 @@ namespace BacteriaNetworks.Infrastructure.Network.Calculators
 			{
 				foreach (var secondProteinId in proteins)
 				{
-					var proteinsProbability = GetProbability(firstProteinId, secondProteinId);
+					if (firstProteinId != secondProteinId)
+					{
+						var proteinsProbability = GetProbability(firstProteinId, secondProteinId);
 
-					AddProteinsProbabilityToNetwork(bacterialNetwork, proteinsProbability, firstProteinId, secondProteinId);
+						AddProteinsProbabilityToNetwork(bacterialNetwork, proteinsProbability, firstProteinId, secondProteinId);
+					}
 				}
 			}
 
