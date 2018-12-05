@@ -50,12 +50,8 @@ $("document").ready(function(){
           }
         },
         physics: {
-          stabilization: false,
-          barnesHut: {
-            gravitationalConstant: -80000,
-            springConstant: 0.001,
-            springLength: 200
-          }
+          enabled: false,
+          stabilization: false
         },
         interaction: {
           tooltipDelay: 200,

@@ -93,6 +93,7 @@
     </Compile>
     <Compile Include="Infrastructure\Bacteria.cs" />
     <Compile Include="Infrastructure\BacteriaFilterType.cs" />
+    <Compile Include="Infrastructure\BacteriaProbabilityOption.cs" />
     <Compile Include="Infrastructure\EnumExtensionMethods.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>

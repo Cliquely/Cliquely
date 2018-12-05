@@ -12,6 +12,10 @@ namespace BacteriaNetworks
 {
     public partial class MainForm : Form
     {
+        private const float MAXIMUM_PROBABILITY = 1f;
+        private const float MINIMUM_PROBABILITY = 0.7f;
+        private const float PROBABILITY_DIFFERENCE = 0.1f;
+
         private List<string> BacteriaAbbrList { get; }
         private List<Bacteria> BacteriaList { get; }
 
@@ -22,8 +26,8 @@ namespace BacteriaNetworks
         {
             InitializeComponent();
 
-	        BaseAddress = $"file:///{Directory.GetCurrentDirectory()}/NetworkVisualization/index.html";
-			InitializeNetworkViewer(BaseAddress);
+            BaseAddress = $"file:///{Directory.GetCurrentDirectory()}/NetworkVisualization/index.html";
+            InitializeNetworkViewer(BaseAddress);
 
             var cleanedDataReverseReader = new CleanedDataReverseReader();
             BacteriaAbbrList = cleanedDataReverseReader.ReadAllBacteria();
@@ -33,6 +37,7 @@ namespace BacteriaNetworks
 
             cmbFilter.SelectedIndexChanged += CmbFilterOnSelectedIndexChanged;
             InitFilters();
+            initProbabilities();
 
             lblInfo.Text = string.Empty;
         }
@@ -82,15 +87,34 @@ namespace BacteriaNetworks
             cmbFilter.SelectedIndex = 0;
         }
 
+        private void initProbabilities()
+        {
+            cmbProbabiity.DataSource = getBacteriaProbabilityOptions();
+            cmbProbabiity.SelectedIndex = 0;
+        }
+
+        private List<BacteriaProbabilityOption> getBacteriaProbabilityOptions()
+        {
+            var probabilities = new List<BacteriaProbabilityOption>();
+
+            for (var i = MINIMUM_PROBABILITY; i <= MAXIMUM_PROBABILITY; i += PROBABILITY_DIFFERENCE)
+            {
+                probabilities.Add(new BacteriaProbabilityOption($"{i * 100}%", i));
+            }
+
+            return probabilities;
+        }
+
         private void btnSearchNetwork_Click(object sender, EventArgs e)
         {
             try
             {
                 UpdateInfo(string.Empty);
 
+                var probability = (cmbProbabiity.SelectedItem as BacteriaProbabilityOption).Value;
                 var bacteria = GetBacteria();
                 var bacteriaNetworks = new Infrastructure.Network.BacteriaNetworks();
-                var network = bacteriaNetworks.SearchNetworks(bacteria, 0.7f);
+                var network = bacteriaNetworks.SearchNetworks(bacteria, probability);
 
                 if (!network.Any())
                 {
