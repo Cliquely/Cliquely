@@ -89,8 +89,10 @@ namespace BacteriaNetworks
 
         private void initProbabilities()
         {
-            cmbProbabiity.DataSource = getBacteriaProbabilityOptions();
-            cmbProbabiity.SelectedIndex = 0;
+            var bacteriaProbabilitiesOptions = getBacteriaProbabilityOptions();
+
+            cmbProbabiity.DataSource = bacteriaProbabilitiesOptions;
+            cmbProbabiity.SelectedIndex = bacteriaProbabilitiesOptions.Count - 1;
         }
 
         private List<BacteriaProbabilityOption> getBacteriaProbabilityOptions()

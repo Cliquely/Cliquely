@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CefSharp;
+using System;
 
 namespace BacteriaNetworks
 {
@@ -7,7 +8,9 @@ namespace BacteriaNetworks
 		[STAThread]
 	    public static void Main()
         {
+            Cef.EnableHighDPISupport();
 			new MainForm().ShowDialog();
+            Cef.Shutdown();
         }
     }
 }
