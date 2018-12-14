@@ -142,9 +142,13 @@ namespace BacteriaNetworks
 
         private string GetBacteria()
         {
-            var bacteria = cmbBacteria.SelectedItem.ToString();
+	        if(cmbBacteria.SelectedItem == null || string.IsNullOrWhiteSpace(cmbBacteria.Text)) throw new ArgumentException();
 
-            if (cmbFilter.SelectedItem.ToString() == BacteriaFilterType.Abbr.GetDescription())
+			var bacteria = cmbBacteria.SelectedItem.ToString();
+
+	        if (bacteria != cmbBacteria.Text) throw new ArgumentException();
+
+	        if (cmbFilter.SelectedItem.ToString() == BacteriaFilterType.Abbr.GetDescription())
             {
                 if (BacteriaAbbrList.Contains(bacteria))
                 {
