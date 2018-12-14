@@ -111,7 +111,7 @@ namespace BacteriaNetworks
         {
             try
             {
-                UpdateInfo(string.Empty);
+                UpdateInfo("Searching for Cliques...");
 
                 var probability = (cmbProbabiity.SelectedItem as BacteriaProbabilityOption).Value;
                 var bacteria = GetBacteria();
@@ -124,6 +124,7 @@ namespace BacteriaNetworks
                     return;
                 }
 
+                UpdateInfo("Found Cliques! Displaying results...");
                 var genes = network.Aggregate(
                     new List<Gene>(),
                     (distinctGenes, currentGenes) =>
