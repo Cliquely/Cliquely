@@ -21,11 +21,12 @@ namespace CliquesGraphs.Excel
 
         public void AddColumn(string header, IEnumerable column)
         {
-            var index = columns.Count + 1;
+            var columnIndex = columns.Count + 1;
 
-            if (columns.ContainsKey(header)) index = columns[header].Index;
+            if (columns.ContainsKey(header))
+                columnIndex = columns[header].Index;
 
-            columns[header] = new ExcelGraphColumn(index);
+            columns[header] = new ExcelGraphColumn(columnIndex);
             columns[header].AddItems(column);
         }
 
@@ -50,7 +51,7 @@ namespace CliquesGraphs.Excel
 
         private int getMaximumRow()
         {
-            return columns.Values.Max(col => col.Count);
+            return columns.Values.Max(col => col.Items) + 1;
         }
 
         public void Save()
@@ -59,7 +60,7 @@ namespace CliquesGraphs.Excel
             {
                 workSheet.Cells[1, col.Index].Value = header;
 
-                for (var row = 2; row <= col.Count; row++) workSheet.Cells[row, col.Index].Value = col[row - 1];
+                for (var row = 2; row <= col.Items + 1; row++) workSheet.Cells[row, col.Index].Value = col[row - 1];
             }
         }
     }

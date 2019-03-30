@@ -21,5 +21,7 @@ namespace CliquesForGenome.Configuration
 
         public float MinimumProbability { get; set; }
         public int MaximumCliqueSize { get; set; }
+
+        public float MinimumProbabilityCache { get; set; }
     }
 }

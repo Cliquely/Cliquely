@@ -6,13 +6,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="Cliques100%.csv"/>
-        <Content Include="Cliques70%Limit50.csv"/>
+        <PackageReference Include="EPPlus" Version="4.5.3.1" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CsvHelper" Version="12.1.2"/>
-        <PackageReference Include="EPPlus" Version="4.5.3.1"/>
+      <None Update="Cliques100%25.csv">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

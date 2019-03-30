@@ -15,7 +15,7 @@ namespace CliquesGraphs.Excel
 
         public int Index { get; }
 
-        public int Count => items.Count;
+        public int Items => items.Count;
 
         public object this[int row] => items[row - 1];
 

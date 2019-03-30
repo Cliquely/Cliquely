@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CliquesForGenome.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -41,9 +42,11 @@ namespace CliquesForGenome.Network.Calculators
 
             var probability = CalcProbability(firstGeneId, secondGeneId);
 
-            if(probability >= ThresholdProbability && !genesProbabilities.ContainsKey(firstGeneId))
+            if (probability >= Settings.Instance.MinimumProbabilityCache)
             {
-                genesProbabilities.Add(firstGeneId, new Dictionary<uint, float>());
+                if (!genesProbabilities.ContainsKey(firstGeneId))
+                    genesProbabilities.Add(firstGeneId, new Dictionary<uint, float>());
+
                 genesProbabilities[firstGeneId].Add(secondGeneId, probability);
             }
 

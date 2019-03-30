@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CliquesGraphs": {
+      "commandName": "Project",
+      "commandLineArgs": "Cliques100%.csv"
+    }
+  }
+}

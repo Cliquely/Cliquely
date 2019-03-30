@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CliquesGraphs.CSV;
 using CliquesGraphs.Excel;
-using CsvHelper;
 
 namespace CliquesGraphs
 {
@@ -21,15 +21,16 @@ namespace CliquesGraphs
 
             foreach (var dataFile in dataFiles)
             {
-                var cliquesSizes = readCsv(dataFile).Select(clique => clique.Size).ToList();
+                var data = readCsv(dataFile);
+                var cliquesSizes = data.Select(clique => clique.Size).ToList();
                 var cliquesSizeCounter = CountCliquesSizes(cliquesSizes);
                 var cliquesSizePercentage = CountCliquesSizesPercentages(cliquesSizeCounter, cliquesSizes.Count);
 
-                if (worksheet["Size"] == null || worksheet["Size"]?.Count < cliquesSizeCounter.Length)
-                    worksheet.AddColumn("Size", Enumerable.Range(1, cliquesSizeCounter.Length));
+                if (worksheet["Size"] == null || worksheet["Size"]?.Items < cliquesSizeCounter.Length)
+                    worksheet.AddColumn("Size", Enumerable.Range(1, cliquesSizeCounter.Length).Where(i => cliquesSizeCounter[i - 1] > 0));
 
-                worksheet.AddColumn($"{dataFile} count", cliquesSizeCounter);
-                worksheet.AddColumn($"{dataFile} percentage", cliquesSizePercentage);
+                worksheet.AddColumn($"{dataFile} count", cliquesSizeCounter.Where(i => i > 0));
+                worksheet.AddColumn($"{dataFile} percentage", cliquesSizePercentage.Where(i => i > 0));
             }
 
 
@@ -44,7 +45,7 @@ namespace CliquesGraphs
             using (var reader = new StreamReader(fileName))
             using (var csv = new CsvReader(reader))
             {
-                return csv.GetRecords<CliqueRecord>().ToList();
+                return csv.ReadCliques().ToList();
             }
         }
 
@@ -66,14 +67,6 @@ namespace CliquesGraphs
                 cliquesSizePercentage[i] = cliquesSizesCounter[i] / (float) numOfCliques * 100;
 
             return cliquesSizePercentage;
-        }
-
-        private class CliqueRecord
-        {
-            public int Incidence { get; set; }
-            public int Size { get; set; }
-
-            public string Proteins { get; set; }
         }
     }
 }
