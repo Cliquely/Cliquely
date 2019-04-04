@@ -7,6 +7,11 @@ namespace CliquesGraphs.CSV
 {
     public class CsvReader : IDisposable
     {
+        private const int TAXONOMY_LOCATION = 0;
+        private const int ABBREV_LOCATION = 2;
+        private const int SIZE_LOCATION = 3;
+        private const int GENES_LOCATION = 4;
+        
         private readonly TextReader reader;
 
         public CsvReader(TextReader reader, bool hasHeader = true)
@@ -15,16 +20,19 @@ namespace CliquesGraphs.CSV
             reader.ReadLine();
         }
 
-        public IEnumerable<CliqueRecord> ReadCliques()
+        public List<CliqueRecord> ReadCSV()
         {
+            var records = new List<CliqueRecord>();
             string line;
 
             while ((line = reader.ReadLine()) != null)
             {
-                var cliqueRecord = reader.ReadLine().Split(',');
+                var cliqueRecord = line.Split(',');
 
-                yield return new CliqueRecord() { Size = int.Parse(cliqueRecord[3]), Genes = string.Join(',', cliqueRecord.Skip(4))};
+                records.Add(new CliqueRecord() {Taxonomy = Enum.Parse<eTaxonomy>(cliqueRecord[TAXONOMY_LOCATION]), Abbrev = cliqueRecord[ABBREV_LOCATION], Size = int.Parse(cliqueRecord[SIZE_LOCATION]), Genes = string.Join(',', cliqueRecord.Skip(GENES_LOCATION))});
             }
+
+            return records;
         }
 
         public void Dispose()

@@ -1,16 +1,10 @@
-﻿using CliquesGraphs.Excel;
-
-namespace CliquesGraphs
+﻿namespace CliquesGraphs
 {
     internal class Program
     {
         private static void Main(string[] args)
         {
-            using (var excel = new ExcelGraphBook())
-            {
-                var s = new CliqueSizeGraph(excel);
-                s.Run(args);
-            }
+            new CliquesGraphs().Plan(args);
         }
     }
 }
