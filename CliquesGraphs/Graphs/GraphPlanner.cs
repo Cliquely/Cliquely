@@ -8,17 +8,23 @@ namespace CliquesGraphs.Graphs
         private readonly ExcelGraphBook excel;
         protected readonly ExcelGraphSheet worksheet;
 
-        public GraphPlanner(ExcelGraphBook excel)
+        public GraphPlanner(ExcelGraphBook excel, string worksheetName)
         {
             this.excel = excel;
-            worksheet = excel.AddWorkSheet(GetType().Name);
+            worksheet = excel.AddWorkSheet(worksheetName);
         }
 
-        public void Run(Dictionary<string, List<CliqueRecord>> dataFiles)
+        public abstract void Run(Dictionary<string, List<CliqueRecord>> dataFiles, eTaxonomy taxonomy);
+
+
+        protected float[] calculatePercentages(int[] cliquesData, int amountOfCliques)
         {
-            runCalculations(dataFiles);
-        }
+            var cliquesPercentage = new float[cliquesData.Length];
 
-        protected abstract void runCalculations(Dictionary<string, List<CliqueRecord>> dataFiles);
+            for (var i = 0; i < cliquesPercentage.Length; i++)
+                cliquesPercentage[i] = cliquesData[i] / (float)amountOfCliques;
+
+            return cliquesPercentage;
+        }
     }
 }

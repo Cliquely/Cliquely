@@ -6,17 +6,17 @@ namespace CliquesGraphs.Graphs
 {
     public class CliqueSizeGraph : GraphPlanner
     {
-        public CliqueSizeGraph(ExcelGraphBook excel) : base(excel)
+        public CliqueSizeGraph(ExcelGraphBook excel, string worksheetName) : base(excel, worksheetName)
         {
         }
 
-        protected override void runCalculations(Dictionary<string, List<CliqueRecord>> dataFiles)
+        public override void Run(Dictionary<string, List<CliqueRecord>> dataFiles, eTaxonomy taxonomy)
         {
             foreach (var (name, data) in dataFiles)
             {
-                var cliquesSizes = data.Distinct().Select(clique => clique.Size).ToList();
+                var cliquesSizes = data.Distinct().Where(clique => (clique.Taxonomy & taxonomy) > 0).Select(clique => clique.Size).ToList();
                 var cliquesSizeCounter = CountCliquesSizes(cliquesSizes);
-                var cliquesSizePercentage = CountCliquesSizesPercentages(cliquesSizeCounter, cliquesSizes.Count);
+                var cliquesSizePercentage = calculatePercentages(cliquesSizeCounter, cliquesSizes.Count);
 
                 if (worksheet["Size"] == null || worksheet["Size"]?.Items < cliquesSizeCounter.Length)
                     worksheet.AddColumn("Size", Enumerable.Range(1, cliquesSizeCounter.Length).Where(i => cliquesSizeCounter[i - 1] > 0));
@@ -24,11 +24,6 @@ namespace CliquesGraphs.Graphs
                 worksheet.AddColumn($"{name} count", cliquesSizeCounter.Where(i => i > 0));
                 worksheet.AddColumn($"{name} percentage", cliquesSizePercentage.Where(i => i > 0));
             }
-
-
-            worksheet.AddGraph("Cliques Sizes", "Size",
-                dataFiles.Select(datafile => $"{datafile.Key} percentage").ToArray());
-
         }
 
 
@@ -40,16 +35,6 @@ namespace CliquesGraphs.Graphs
             foreach (var cliqueSize in cliquesSizes) cliquesSizeCounter[cliqueSize - 1]++;
 
             return cliquesSizeCounter;
-        }
-
-        private float[] CountCliquesSizesPercentages(int[] cliquesSizesCounter, int numOfCliques)
-        {
-            var cliquesSizePercentage = new float[cliquesSizesCounter.Length];
-
-            for (var i = 0; i < cliquesSizePercentage.Length; i++)
-                cliquesSizePercentage[i] = cliquesSizesCounter[i] / (float)numOfCliques * 100;
-
-            return cliquesSizePercentage;
         }
     }
 }

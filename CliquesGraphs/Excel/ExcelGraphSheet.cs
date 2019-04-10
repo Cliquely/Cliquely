@@ -30,25 +30,6 @@ namespace CliquesGraphs.Excel
             columns[header].AddItems(column);
         }
 
-        public void AddGraph(string name, string xSeriesColumn, params string[] seriesColumns)
-        {
-            var chart = workSheet.Drawings.AddChart(name, eChartType.Line);
-            chart.SetPosition(5, 0, columns.Count + 1, 0);
-            chart.SetSize(700, 400);
-
-            var toRow = getMaximumRow();
-            var xSeriesAddress =
-                ExcelCellBase.GetAddress(2, columns[xSeriesColumn].Index, toRow, columns[xSeriesColumn].Index);
-
-            foreach (var column in seriesColumns)
-            {
-                var series =
-                    chart.Series.Add(ExcelCellBase.GetAddress(2, columns[column].Index, toRow, columns[column].Index),
-                        xSeriesAddress);
-                series.Header = column;
-            }
-        }
-
         private int getMaximumRow()
         {
             return columns.Values.Max(col => col.Items) + 1;

@@ -6,32 +6,25 @@ namespace CliquesGraphs.Graphs
 {
     public class CliquesInGenomeGraph : GraphPlanner
     {
-        private readonly eTaxonomy taxonomy;
-
-        public CliquesInGenomeGraph(ExcelGraphBook excel, eTaxonomy taxonomy = eTaxonomy.Archaea | eTaxonomy.Bacteria | eTaxonomy.Eukaryota) : base(excel)
+        public CliquesInGenomeGraph(ExcelGraphBook excel, string worksheetName) : base(excel, worksheetName)
         {
-            this.taxonomy = taxonomy;
         }
 
-        protected override void runCalculations(Dictionary<string, List<CliqueRecord>> dataFiles)
+        public override void Run(Dictionary<string, List<CliqueRecord>> dataFiles, eTaxonomy taxonomy)
         {
             foreach (var (name, data) in dataFiles)
             {
                 var dataForTaxonomy = data.Where(clique => (clique.Taxonomy & taxonomy) > 0).ToList();
                 var cliquesInGenome = calculateAmountOfCliquesInGenome(dataForTaxonomy);
                 var cliquesSizeIncidence = calculateCliquesSizeIncidence(cliquesInGenome);
-                var cliquesSizeIncidencePercentage = calculateCliquesSizeIncidencePercentage(cliquesSizeIncidence, cliquesInGenome.Count);
+                var cliquesSizeIncidencePercentage = calculatePercentages(cliquesSizeIncidence, cliquesInGenome.Count);
 
                 if (worksheet["Amount Of Cliques"] == null || worksheet["Amount Of Cliques"]?.Items < cliquesSizeIncidence.Length)
                     worksheet.AddColumn("Amount Of Cliques", Enumerable.Range(1, cliquesSizeIncidence.Length).Where(i => cliquesSizeIncidence[i - 1] > 0));
 
-                worksheet.AddColumn($"{name} Incidence", cliquesSizeIncidence.Where(i => i > 0));
+                worksheet.AddColumn($"{name} incidence", cliquesSizeIncidence.Where(i => i > 0));
                 worksheet.AddColumn($"{name} percentage", cliquesSizeIncidencePercentage.Where(i => i > 0));
             }
-
-
-            worksheet.AddGraph("Cliques Incidence", "Amount Of Cliques",
-                dataFiles.Select(datafile => $"{datafile.Key} percentage").ToArray());
         }
 
         private Dictionary<string, int> calculateAmountOfCliquesInGenome(List<CliqueRecord> cliques)
@@ -62,18 +55,6 @@ namespace CliquesGraphs.Graphs
             }
 
             return cliquesInGenomeCounter;
-        }
-
-        private float[] calculateCliquesSizeIncidencePercentage(int[] cliquesSizeIncidence, int amountOfCliques)
-        {
-            var cliquesSizeIncidencePercentage = new float[cliquesSizeIncidence.Length];
-
-            for(var i = 0; i < cliquesSizeIncidencePercentage.Length; i++)
-            {
-                cliquesSizeIncidencePercentage[i] = cliquesSizeIncidence[i] / (float)amountOfCliques * 100;
-            }
-
-            return cliquesSizeIncidencePercentage;
         }
     }
 }

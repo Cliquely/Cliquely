@@ -14,13 +14,14 @@ namespace CliquesGraphs
             {
                 var dataByFiles = readDataFiles(dataFiles);
 
-                new CliqueSizeGraph(excel).Run(dataByFiles);
-                new CliquesInGenomeGraph(excel).Run(dataByFiles);
-                new CliquesInArcheaGraph(excel).Run(dataByFiles);
-                new CliquesInBacteriaGraph(excel).Run(dataByFiles);
-                new CliquesInEukaryotaGraph(excel).Run(dataByFiles);
+                new CliqueSizeGraph(excel, "Archea cliques sizes distribution").Run(dataByFiles, eTaxonomy.Archaea);
+                new CliqueSizeGraph(excel, "Bacteria cliques sizes distribution").Run(dataByFiles, eTaxonomy.Bacteria);
+                new CliqueSizeGraph(excel, "Eukaryota cliques sizes distribution").Run(dataByFiles, eTaxonomy.Eukaryota);
+                new CliquesInGenomeGraph(excel, "Amount of cliques in Archea distribution").Run(dataByFiles, eTaxonomy.Archaea);
+                new CliquesInGenomeGraph(excel, "Amount of cliques in Bacteria distribution").Run(dataByFiles, eTaxonomy.Bacteria);
+                new CliquesInGenomeGraph(excel, "Amount of cliques in Eukaryota distribution").Run(dataByFiles, eTaxonomy.Eukaryota);
 
-                excel.Save("test.xlsx");
+                excel.Save("Results.xlsx");
             }
         }
 
