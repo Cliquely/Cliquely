@@ -27,7 +27,7 @@ namespace CliquesGraphs.Graphs
         }
 
 
-        private int[] CountCliquesSizes(List<int> cliquesSizes)
+        private int[] CountCliquesSizes(List<ushort> cliquesSizes)
         {
             var maxCliqueSize = cliquesSizes.Max();
             var cliquesSizeCounter = new int[maxCliqueSize];

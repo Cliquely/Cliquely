@@ -5,8 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using BlastFromNCBI;
-
 namespace Cliquely
 {
 	public partial class Form1 : Form
@@ -14,57 +12,45 @@ namespace Cliquely
         public Form1()
         {
             InitializeComponent();
-            Blast.Finished += Blast_Finished;
 
 			comboBoxGeneType.SelectedIndex = 0;
 		}
 
         private void buttonSearchFasta_Click(object sender, EventArgs e)
         {
-			genelnkLbl.Text = "Starts searching for a gene for the given fasta sequence.";
-			genelnkLbl.LinkArea = new LinkArea(0, 0);
 			CliquesDGV.DataSource = null;
 
-			Blast.SendRequest(textBoxFasta.Text);
-		}
+            searchGeneByFasta(textBoxFasta.Text);
+        }
 
-        private void Blast_Finished(string i_RID, TimeSpan i_TimeSinceStarted, List<BlastGene> i_Genes)
+        private void searchGeneByFasta(string fasta)
         {
-			if (i_Genes == null)
-            {
-				Invoke(new Action(() => { genelnkLbl.Text = "Could not find a gene for the given fasta sequence."; }));
-				return;
-            }
-			
-			SqlHelper sql = new SqlHelper();
-			var blastGene = i_Genes.First();
-			string selectQuery = $"SELECT GeneFasta.Gene, GeneFasta.Fasta FROM GeneFasta WHERE GeneFasta.Fasta = \"{blastGene.Sequence}\"";
-			DataTable bacteriaTable = sql.Select(selectQuery.ToString());
+            var sql = new SqlHelper();
 
-            if(bacteriaTable.Rows.Count == 0)
+            var selectQuery = $"SELECT GeneFasta.Gene, GeneFasta.Fasta FROM GeneFasta WHERE GeneFasta.Fasta = \"{fasta}\"";
+            var bacteriaTable = sql.Select(selectQuery.ToString());
+
+            if (bacteriaTable.Rows.Count == 0)
             {
-				Invoke(new Action(() => { genelnkLbl.Text = "Could not find a gene for the given fasta sequence."; }));
-				return;
-			}
+                Invoke(new Action(() => { geneLbl.Text = "Could not find a gene for the given fasta sequence."; }));
+                return;
+            }
 
             selectQuery = $"SELECT Gene.HomGene, Gene.Id, Gene.Details, GeneData.Bacteria FROM Gene INNER JOIN GeneData ON Gene.Id = GeneData.Gene WHERE GeneData.Bacteria = \"{bacteriaTable.Rows[0][0]}\"";
 
             DataTable geneTable = sql.Select(selectQuery.ToString());
 
-			var gene = uint.Parse(geneTable.Rows[0][1].ToString());
+            var gene = uint.Parse(geneTable.Rows[0][1].ToString());
 
-			Invoke(new Action(() => {
-				var geneDetails = getGeneLine(gene, true);
-				genelnkLbl.Text = $"Gene: {geneDetails} was found most suitable for the given fasta sequence.\nStarts searching for cliques with the given gene.";
+            Invoke(new Action(() => {
+                var geneDetails = getGeneLine(gene, true);
+                geneLbl.Text = $"Gene: {geneDetails} was found for the given fasta sequence.\nStarts searching for cliques with the given gene.";
+            }));
 
-				genelnkLbl.LinkArea = new LinkArea(start: genelnkLbl.Text.IndexOf(':') + 2, length: geneDetails.ToString().Length + 1);
-				genelnkLbl.LinkClicked += (sender, e) => System.Diagnostics.Process.Start($"https://www.ncbi.nlm.nih.gov/protein/{blastGene.AccessionId}");
-			}));
-
-			discoverCliques(gene, blastGene.MatchingPercentage);
+            discoverCliques(gene);
         }
 
-		private void discoverCliques(uint gene, float matchingPercentage)
+		private void discoverCliques(uint gene)
         {
 			Dictionary<uint, Dictionary<uint, float>> probabilities;
 			Dictionary<string, List<uint>> reversed_cleaned_data;
@@ -98,23 +84,23 @@ namespace Cliquely
 				return;
 			}
 
-			Invoke(new Action(() => { genelnkLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene (loading):"; }));
+			Invoke(new Action(() => { geneLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene (loading):"; }));
 
 			if (discoverCliques.Cliques.Count <= 100)
 			{
-				displayCliquesInGridView(discoverCliques.Cliques, gene, matchingPercentage, reversed_cleaned_data);
+				displayCliquesInGridView(discoverCliques.Cliques, gene, reversed_cleaned_data);
 			}
 			else
 			{
-				exportCliquesToCSVFile(discoverCliques.Cliques, gene, matchingPercentage, reversed_cleaned_data);
+				exportCliquesToCSVFile(discoverCliques.Cliques, gene, reversed_cleaned_data);
 			}
 
-			Invoke(new Action(() => { genelnkLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene:"; }));
+			Invoke(new Action(() => { geneLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene:"; }));
 		}
 
 		private void displayCouldNoFindAnyCliques(uint gene)
 		{
-			Invoke(new Action(() => { genelnkLbl.Text = $"{geneFounded(gene)}\nCould not find any cliques for the given gene."; }));
+			Invoke(new Action(() => { geneLbl.Text = $"{geneFounded(gene)}\nCould not find any cliques for the given gene."; }));
 		}
 
 		private string geneFounded(uint gene)
@@ -124,7 +110,7 @@ namespace Cliquely
 			return $"Gene: {geneDetails} was found most suitable for the given fasta sequence.";
 		}
 
-		private void displayCliquesInGridView(List<List<uint>> cliques, uint gene, float matchingPercentage, Dictionary<string, List<uint>> reversed_cleaned_data)
+		private void displayCliquesInGridView(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
 		{
 			DataTable table = new DataTable();
 
@@ -137,7 +123,7 @@ namespace Cliquely
 			foreach (var clique in cliques)
             {
                 var row = table.NewRow();
-                var cliqueRowItems = getCliqueRowItems(clique, gene, matchingPercentage, reversed_cleaned_data);
+                var cliqueRowItems = getCliqueRowItems(clique, gene, reversed_cleaned_data);
 
                 while (clique.Count > table.Columns.Count - 4)
                 {
@@ -155,7 +141,7 @@ namespace Cliquely
 			}));
 		}
 
-        private List<string> getCliqueRowItems(List<uint> clique, uint gene, float matchingPercentage, Dictionary<string, List<uint>> reversed_cleaned_data)
+        private List<string> getCliqueRowItems(List<uint> clique, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
 		{
 			var cliqueRowItems = new List<string>();
 
@@ -163,7 +149,6 @@ namespace Cliquely
 			int incidence = calculateIncidence(clique, reversed_cleaned_data.Values.ToList());
 
             cliqueRowItems.Add(getGeneLine(gene));
-            cliqueRowItems.Add(matchingPercentage.ToString());
             cliqueRowItems.Add(textBoxTreshold.Text);
 			cliqueRowItems.Add(incidence.ToString());
 
@@ -173,12 +158,12 @@ namespace Cliquely
 			return cliqueRowItems;
 		}
 
-		private void exportCliquesToCSVFile(List<List<uint>> cliques, uint gene, float matchingPercentage, Dictionary<string, List<uint>> reversed_cleaned_data)
+		private void exportCliquesToCSVFile(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
 		{
 			var csv = new StringBuilder();
 
 			csv.AppendLine("Gene, Match, Probability, Incidence, Count");
-			cliques.ForEach(clique => csv.AppendLine(string.Join(",", makeCsvCompatible(getCliqueRowItems(clique, gene, matchingPercentage, reversed_cleaned_data)))));
+			cliques.ForEach(clique => csv.AppendLine(string.Join(",", makeCsvCompatible(getCliqueRowItems(clique, gene, reversed_cleaned_data)))));
 
 			using (var writer = new StreamWriter("Cliques.csv"))
 			{
@@ -187,7 +172,7 @@ namespace Cliquely
 
 			Invoke(new Action(() =>
 			{
-				genelnkLbl.Text = "Saves cliques to csv file";
+				geneLbl.Text = "Saves cliques to csv file";
 
 				MessageBox.Show("Exported all cliques to Cliques.csv");
 			}));

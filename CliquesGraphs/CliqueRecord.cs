@@ -8,18 +8,16 @@ namespace CliquesGraphs
 
         public string Abbrev { get; set; }
 
-        public int Size { get; set; }
-
-        public string Genes { get; set; }
+        public ushort Size { get; set; }
 
         public override bool Equals(object obj)
         {
-            return Genes.Equals((obj as CliqueRecord).Genes);
+            return GetHashCode().Equals((obj as CliqueRecord).GetHashCode());
         }
 
         public override int GetHashCode()
         {
-            return Genes.GetHashCode();
+            return Taxonomy.GetHashCode() + Abbrev.GetHashCode() + Size.GetHashCode();
         }
     }
 

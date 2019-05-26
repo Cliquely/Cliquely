@@ -29,7 +29,7 @@ namespace CliquesGraphs.CSV
             {
                 var cliqueRecord = line.Split(',');
 
-                records.Add(new CliqueRecord() {Taxonomy = Enum.Parse<eTaxonomy>(cliqueRecord[TAXONOMY_LOCATION]), Abbrev = cliqueRecord[ABBREV_LOCATION], Size = int.Parse(cliqueRecord[SIZE_LOCATION]), Genes = string.Join(',', cliqueRecord.Skip(GENES_LOCATION))});
+                records.Add(new CliqueRecord() {Taxonomy = Enum.Parse<eTaxonomy>(cliqueRecord[TAXONOMY_LOCATION]), Abbrev = cliqueRecord[ABBREV_LOCATION], Size = ushort.Parse(cliqueRecord[SIZE_LOCATION])});
             }
 
             return records;
