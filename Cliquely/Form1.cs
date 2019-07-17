@@ -115,7 +115,6 @@ namespace Cliquely
 			DataTable table = new DataTable();
 
 			table.Columns.Add("Gene");
-            table.Columns.Add("Match");
 			table.Columns.Add("Probability");
 			table.Columns.Add("Incidence");
 			table.Columns.Add("Count");
@@ -162,7 +161,7 @@ namespace Cliquely
 		{
 			var csv = new StringBuilder();
 
-			csv.AppendLine("Gene, Match, Probability, Incidence, Count");
+			csv.AppendLine("Gene, Probability, Incidence, Count");
 			cliques.ForEach(clique => csv.AppendLine(string.Join(",", makeCsvCompatible(getCliqueRowItems(clique, gene, reversed_cleaned_data)))));
 
 			using (var writer = new StreamWriter("Cliques.csv"))
