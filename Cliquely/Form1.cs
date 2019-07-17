@@ -75,8 +75,17 @@ namespace Cliquely
 				return;
 			}
 
-            var discoverCliques = new DiscoverCliques(gene, probabilities);
-            discoverCliques.Run();
+	        if (!int.TryParse(textBoxMaxCliqueSize.Text, out var maximalCliqueSize))
+	        {
+		        Invoke(new Action(() => { geneLbl.Text = $"Maximal clique size must be an positive integer: {maximalCliqueSize}."; }));
+			}
+
+	        var discoverCliques = new DiscoverCliques(gene, probabilities, maximalCliqueSize);
+
+			Invoke(new Action(() =>
+	        {
+		        discoverCliques.Run();
+	        }));
 
             if (discoverCliques.Cliques.Count == 0)
             {

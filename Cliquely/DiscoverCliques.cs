@@ -1,98 +1,97 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Cliquely
 {
     public class DiscoverCliques
     {
-        uint gene;
-		Random Rand { get; } = new Random();
-		Dictionary<uint, Dictionary<uint, float>> probabilities;
+	    private uint Gene { get; }
+	    private Random Rand { get; } = new Random();
+	    private Dictionary<uint, Dictionary<uint, float>> Probabilities { get; }
+		private int MaxCliqueSize { get; }
 
-        public List<List<uint>> Cliques;
+        public readonly List<List<uint>> Cliques;
 
-        public DiscoverCliques(uint i_Gene, Dictionary<uint, Dictionary<uint, float>> i_Probabilities)
+        public DiscoverCliques(uint gene, Dictionary<uint, Dictionary<uint, float>> probabilities, int maxCliqueSize)
         {
-            gene = i_Gene;
-            probabilities = i_Probabilities;
+	        Gene = gene;
+            Probabilities = probabilities;
             Cliques = new List<List<uint>>();
+	        MaxCliqueSize = maxCliqueSize;
+
         }
 
         public void Run()
         {
-            List<uint> excludedVertices = new List<uint>();
-            List<uint> possibleCliqueVertices = new List<uint>(probabilities.Keys);
+            var excludedVertices = new List<uint>();
+            var possibleCliqueVertices = new List<uint>(Probabilities.Keys);
 
             BronKerbosch2(
-                new List<uint> { gene },
+                new List<uint> { Gene },
                 possibleCliqueVertices,
                 excludedVertices
             );
 
         }
 
-        private void BronKerbosch2(List<uint> i_CliqueVertices, List<uint> i_PossibleCliqueVertices,
-            List<uint> i_ExcludedVertices) // R P X
+        private void BronKerbosch2(List<uint> cliqueVertices, List<uint> possibleCliqueVertices, List<uint> excludedVertices) // R P X
         {
-            /* if (i_CliqueVertices.Count > 50)
-             {
-                 return;
-             }*/
-
-            if (i_PossibleCliqueVertices.Count == 0 && i_ExcludedVertices.Count == 0)
+			if (cliqueVertices.Count > MaxCliqueSize)
             {
-                if (i_CliqueVertices.Count > 1)
+                return;
+            }
+
+			if (possibleCliqueVertices.Count == 0 && excludedVertices.Count == 0)
+            {
+                if (cliqueVertices.Count > 1)
                 {
-                    notifyNewClique(i_CliqueVertices);
+                    NotifyNewClique(cliqueVertices);
                 }
 
                 return;
             }
 
-            uint pivot = selectRandomVertex(i_PossibleCliqueVertices.Union(i_ExcludedVertices));
+            var pivot = SelectRandomVertex(possibleCliqueVertices.Union(excludedVertices));
+            var enumerableVertices = possibleCliqueVertices.Except(getNeighbours(pivot)).ToList();
 
-            List<uint> enumerableVertices = i_PossibleCliqueVertices.Except(getNeighbours(pivot)).ToList();
-
-            for (int i = 0; i < enumerableVertices.Count;)
+            for (var i = 0; i < enumerableVertices.Count;)
             {
-                IEnumerable<uint> vertexNeighbours = getNeighbours(enumerableVertices[i]);
+                var vertexNeighbours = getNeighbours(enumerableVertices[i]).ToList();
 
                 BronKerbosch2(
-                    i_CliqueVertices.Union(new List<uint> { enumerableVertices[i] }).ToList(),
-                    i_PossibleCliqueVertices.Intersect(vertexNeighbours).ToList(),
-                    i_ExcludedVertices.Intersect(vertexNeighbours).ToList()
+                    cliqueVertices.Union(new List<uint> { enumerableVertices[i] }).ToList(),
+                    possibleCliqueVertices.Intersect(vertexNeighbours).ToList(),
+                    excludedVertices.Intersect(vertexNeighbours).ToList()
                 );
 
-                i_ExcludedVertices.Add(enumerableVertices[i]);
-                i_PossibleCliqueVertices.Remove(enumerableVertices[i]);
+                excludedVertices.Add(enumerableVertices[i]);
+                possibleCliqueVertices.Remove(enumerableVertices[i]);
 
-                enumerableVertices = i_PossibleCliqueVertices.Except(getNeighbours(pivot)).ToList();
+                enumerableVertices = possibleCliqueVertices.Except(getNeighbours(pivot)).ToList();
             }
         }
 
-        private void notifyNewClique(List<uint> i_CliqueVertices)
+        private void NotifyNewClique(List<uint> cliqueVertices)
         {
-            Cliques.Add(i_CliqueVertices);
+            Cliques.Add(cliqueVertices);
         }
 
-        private IEnumerable<uint> getNeighbours(uint i_Id)
+        private IEnumerable<uint> getNeighbours(uint id)
         {
-            return probabilities[i_Id].Keys;
+            return Probabilities[id].Keys;
         }
 
-        private uint selectMaximumDegreeVertex(IEnumerable<uint> i_Union)
+        private uint SelectMaximumDegreeVertex(IEnumerable<uint> union)
         {
-			int maxDegree = probabilities.Where(e => i_Union.Contains(e.Key)).Max(e => e.Value.Count);
+			var maxDegree = Probabilities.Where(e => union.Contains(e.Key)).Max(e => e.Value.Count);
 
-            return probabilities.First(e => i_Union.Contains(e.Key) & e.Value.Count == maxDegree).Key;
+            return Probabilities.First(e => union.Contains(e.Key) & e.Value.Count == maxDegree).Key;
 		}
 
-		private uint selectRandomVertex(IEnumerable<uint> i_Union)
+		private uint SelectRandomVertex(IEnumerable<uint> union)
 		{
-			var unionList = i_Union.ToList();
+			var unionList = union.ToList();
 
 			return unionList[Rand.Next(0, unionList.Count)];
 		}
