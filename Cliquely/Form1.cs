@@ -32,7 +32,7 @@ namespace Cliquely
 
             if (bacteriaTable.Rows.Count == 0)
             {
-                Invoke(new Action(() => { geneLbl.Text = "Could not find a gene for the given fasta sequence."; }));
+                Invoke(new Action(() => { geneLbl.Text = "Could not find a gene for the given fasta sequence and the requirements."; }));
                 return;
             }
 
@@ -75,12 +75,17 @@ namespace Cliquely
 				return;
 			}
 
-	        if (!int.TryParse(textBoxMaxCliqueSize.Text, out var maximalCliqueSize))
-	        {
-		        Invoke(new Action(() => { geneLbl.Text = $"Maximal clique size must be an positive integer: {maximalCliqueSize}."; }));
-			}
+            if (!int.TryParse(textBoxMaxCliqueSize.Text, out var maximalCliqueSize))
+            {
+                Invoke(new Action(() => { geneLbl.Text = $"Maximal clique size must be an positive integer: {maximalCliqueSize}."; }));
+            }
 
-	        var discoverCliques = new DiscoverCliques(gene, probabilities, maximalCliqueSize);
+            if (!int.TryParse(textBoxMaxCliques.Text, out var maxCliques))
+            {
+                Invoke(new Action(() => { geneLbl.Text = $"Maximum cliques must be an positive integer: {maxCliques}."; }));
+            }
+
+            var discoverCliques = new DiscoverCliques(gene, probabilities, maximalCliqueSize, maxCliques);
 
 			Invoke(new Action(() =>
 	        {
@@ -99,12 +104,10 @@ namespace Cliquely
 			{
 				displayCliquesInGridView(discoverCliques.Cliques, gene, reversed_cleaned_data);
 			}
-			else
-			{
-				exportCliquesToCSVFile(discoverCliques.Cliques, gene, reversed_cleaned_data);
-			}
 
-			Invoke(new Action(() => { geneLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene:"; }));
+            exportCliquesToCSVFile(discoverCliques.Cliques, gene, reversed_cleaned_data);
+
+            Invoke(new Action(() => { geneLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene:"; }));
 		}
 
 		private void displayCouldNoFindAnyCliques(uint gene)
@@ -173,7 +176,7 @@ namespace Cliquely
 			csv.AppendLine("Gene, Probability, Incidence, Count");
 			cliques.ForEach(clique => csv.AppendLine(string.Join(",", makeCsvCompatible(getCliqueRowItems(clique, gene, reversed_cleaned_data)))));
 
-			using (var writer = new StreamWriter("Cliques.csv"))
+			using (var writer = new StreamWriter($"Cliques {gene}.csv"))
 			{
 				writer.Write(csv.ToString());
 			}

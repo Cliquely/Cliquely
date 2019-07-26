@@ -11,15 +11,17 @@ namespace Cliquely
 	    private Dictionary<uint, Dictionary<uint, float>> Probabilities { get; }
 		private int MaxCliqueSize { get; }
 
+        private int MaxCliques { get; }
+
         public readonly List<List<uint>> Cliques;
 
-        public DiscoverCliques(uint gene, Dictionary<uint, Dictionary<uint, float>> probabilities, int maxCliqueSize)
+        public DiscoverCliques(uint gene, Dictionary<uint, Dictionary<uint, float>> probabilities, int maxCliqueSize, int maxCliques)
         {
 	        Gene = gene;
             Probabilities = probabilities;
             Cliques = new List<List<uint>>();
 	        MaxCliqueSize = maxCliqueSize;
-
+            MaxCliques = maxCliques;
         }
 
         public void Run()
@@ -36,12 +38,7 @@ namespace Cliquely
         }
 
         private void BronKerbosch2(List<uint> cliqueVertices, List<uint> possibleCliqueVertices, List<uint> excludedVertices) // R P X
-        {
-			if (cliqueVertices.Count > MaxCliqueSize)
-            {
-                return;
-            }
-
+        { 
 			if (possibleCliqueVertices.Count == 0 && excludedVertices.Count == 0)
             {
                 if (cliqueVertices.Count > 1)
@@ -49,6 +46,16 @@ namespace Cliquely
                     NotifyNewClique(cliqueVertices);
                 }
 
+                return;
+            }
+
+            if (cliqueVertices.Count == MaxCliqueSize)
+            {
+                return;
+            }
+
+            if(Cliques.Count >= MaxCliques)
+            {
                 return;
             }
 
