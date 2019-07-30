@@ -54,18 +54,19 @@ namespace Cliquely
         {
 			Dictionary<uint, Dictionary<uint, float>> probabilities;
 			Dictionary<string, List<uint>> reversed_cleaned_data;
+	        Dictionary<uint, float> geneNeighboursProbabilities;
 
 			var geneType = (string)Invoke(new Func<string>(() => comboBoxGeneType.SelectedItem.ToString()));
 
 			if (geneType == "Homology")
 			{
-				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), true);// gets orthoGeneId and return hom genes probabilities.
+				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), true, out geneNeighboursProbabilities);// gets orthoGeneId and return hom genes probabilities.
 				reversed_cleaned_data = getReversedCleanedDataHom(gene); // gets orthoGeneId
 				gene = getHomGeneId(gene); // must be after 'getReversedCleanedDataHom(..)'
 			}
 			else
 			{
-				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), false);
+				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), false, out geneNeighboursProbabilities);
 				reversed_cleaned_data = getReversedCleanedDataOrtho(gene);
 			}
 
@@ -85,12 +86,13 @@ namespace Cliquely
                 Invoke(new Action(() => { geneLbl.Text = $"Maximum cliques must be an positive integer: {maxCliques}."; }));
             }
 
-            var discoverCliques = new DiscoverCliques(gene, probabilities, maximalCliqueSize, maxCliques);
+	        var sortedGenes = probabilities.Keys
+		        .OrderByDescending(v => geneNeighboursProbabilities[v])
+		        .ThenBy(v => probabilities[v].Count)
+		        .ThenByDescending(v => v).ToList();
 
-			Invoke(new Action(() =>
-	        {
-		        discoverCliques.Run();
-	        }));
+			var discoverCliques = new DiscoverCliques(gene, sortedGenes, probabilities, maximalCliqueSize, maxCliques);
+			discoverCliques.Run();
 
             if (discoverCliques.Cliques.Count == 0)
             {

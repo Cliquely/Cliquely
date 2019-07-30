@@ -9,7 +9,7 @@ namespace Cliquely
     {
         private static readonly string[] emptyChars = { " ", "\t" };
 
-        public static Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesForGene(uint i_Gene, float i_Probability, bool isHomology)
+        public static Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesForGene(uint i_Gene, float i_Probability, bool isHomology, out Dictionary<uint, float> GeneNeighboursProbabilities)
 		{
 			var sql = new SqlHelper();
 			var reversed_cleaned_data = new Dictionary<string, List<uint>>();
@@ -75,12 +75,12 @@ namespace Cliquely
 				potentialGenes.Add(gene, cleaned_data[gene]);
 			}
 
-			var geneDic = calculateProbabilitiesWithGenes(i_Gene, potentialGenes, i_Probability);
+			GeneNeighboursProbabilities = calculateProbabilitiesWithGenes(i_Gene, potentialGenes, i_Probability);
 			toDelete.Clear();
 
 			foreach (uint gene in potentialGenes.Keys)
 			{
-				if (!geneDic.ContainsKey(gene))
+				if (!GeneNeighboursProbabilities.ContainsKey(gene))
 				{
 					toDelete.Add(gene);
 				}

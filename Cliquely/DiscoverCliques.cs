@@ -8,28 +8,30 @@ namespace Cliquely
     {
 	    private uint Gene { get; }
 	    private Random Rand { get; } = new Random();
-	    private Dictionary<uint, Dictionary<uint, float>> Probabilities { get; }
+	    private IEnumerable<uint> PotentialGenes { get; }
 		private int MaxCliqueSize { get; }
+	    private Dictionary<uint, Dictionary<uint, float>> GenesNetwork { get; set; }
 
-        private int MaxCliques { get; }
+		private int MaxCliques { get; }
 
         public readonly List<List<uint>> Cliques;
 
-        public DiscoverCliques(uint gene, Dictionary<uint, Dictionary<uint, float>> probabilities, int maxCliqueSize, int maxCliques)
+        public DiscoverCliques(uint gene, IEnumerable<uint> potentialGenes, Dictionary<uint, Dictionary<uint, float>> genesNetwork, int maxCliqueSize, int maxCliques)
         {
 	        Gene = gene;
-            Probabilities = probabilities;
+	        PotentialGenes = potentialGenes;
             Cliques = new List<List<uint>>();
 	        MaxCliqueSize = maxCliqueSize;
             MaxCliques = maxCliques;
+	        GenesNetwork = genesNetwork;
         }
 
         public void Run()
         {
             var excludedVertices = new List<uint>();
-            var possibleCliqueVertices = new List<uint>(Probabilities.Keys);
+            var possibleCliqueVertices = new List<uint>(PotentialGenes);
 
-            BronKerbosch2(
+	        BronKerbosch2(
                 new List<uint> { Gene },
                 possibleCliqueVertices,
                 excludedVertices
@@ -86,14 +88,14 @@ namespace Cliquely
 
         private IEnumerable<uint> getNeighbours(uint id)
         {
-            return Probabilities[id].Keys;
+            return GenesNetwork[id].Keys;
         }
 
         private uint SelectMaximumDegreeVertex(IEnumerable<uint> union)
         {
-			var maxDegree = Probabilities.Where(e => union.Contains(e.Key)).Max(e => e.Value.Count);
+			var maxDegree = GenesNetwork.Where(e => union.Contains(e.Key)).Max(e => e.Value.Count);
 
-            return Probabilities.First(e => union.Contains(e.Key) & e.Value.Count == maxDegree).Key;
+            return GenesNetwork.First(e => union.Contains(e.Key) & e.Value.Count == maxDegree).Key;
 		}
 
 		private uint SelectRandomVertex(IEnumerable<uint> union)
