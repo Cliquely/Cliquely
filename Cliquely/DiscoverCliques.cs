@@ -61,23 +61,18 @@ namespace Cliquely
                 return;
             }
 
-            var pivot = SelectRandomVertex(possibleCliqueVertices.Union(excludedVertices));
-            var enumerableVertices = possibleCliqueVertices.Except(getNeighbours(pivot)).ToList();
-
-            for (var i = 0; i < enumerableVertices.Count;)
+            for (var i = 0; i < possibleCliqueVertices.Count;)
             {
-                var vertexNeighbours = getNeighbours(enumerableVertices[i]).ToList();
+                var vertexNeighbours = getNeighbours(possibleCliqueVertices[i]).ToList();
 
                 BronKerbosch2(
-                    cliqueVertices.Union(new List<uint> { enumerableVertices[i] }).ToList(),
+                    cliqueVertices.Union(new List<uint> { possibleCliqueVertices[i] }).ToList(),
                     possibleCliqueVertices.Intersect(vertexNeighbours).ToList(),
                     excludedVertices.Intersect(vertexNeighbours).ToList()
                 );
 
-                excludedVertices.Add(enumerableVertices[i]);
-                possibleCliqueVertices.Remove(enumerableVertices[i]);
-
-                enumerableVertices = possibleCliqueVertices.Except(getNeighbours(pivot)).ToList();
+                excludedVertices.Add(possibleCliqueVertices[i]);
+                possibleCliqueVertices.Remove(possibleCliqueVertices[i]);
             }
         }
 
