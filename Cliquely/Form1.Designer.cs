@@ -51,7 +51,7 @@
 			this.textBoxFasta.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.textBoxFasta.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
 			this.textBoxFasta.Location = new System.Drawing.Point(27, 62);
-			this.textBoxFasta.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.textBoxFasta.Margin = new System.Windows.Forms.Padding(4);
 			this.textBoxFasta.Multiline = true;
 			this.textBoxFasta.Name = "textBoxFasta";
 			this.textBoxFasta.Size = new System.Drawing.Size(1130, 169);
@@ -62,7 +62,7 @@
 			this.buttonSearchFasta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.buttonSearchFasta.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
 			this.buttonSearchFasta.Location = new System.Drawing.Point(963, 242);
-			this.buttonSearchFasta.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.buttonSearchFasta.Margin = new System.Windows.Forms.Padding(4);
 			this.buttonSearchFasta.Name = "buttonSearchFasta";
 			this.buttonSearchFasta.Size = new System.Drawing.Size(193, 42);
 			this.buttonSearchFasta.TabIndex = 5;
@@ -78,7 +78,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.CliquesDGV.Location = new System.Drawing.Point(27, 475);
-			this.CliquesDGV.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.CliquesDGV.Margin = new System.Windows.Forms.Padding(4);
 			this.CliquesDGV.Name = "CliquesDGV";
 			this.CliquesDGV.ReadOnly = true;
 			this.CliquesDGV.Size = new System.Drawing.Size(1131, 302);
@@ -89,7 +89,7 @@
 			// 
 			this.textBoxTreshold.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
 			this.textBoxTreshold.Location = new System.Drawing.Point(235, 251);
-			this.textBoxTreshold.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.textBoxTreshold.Margin = new System.Windows.Forms.Padding(4);
 			this.textBoxTreshold.Name = "textBoxTreshold";
 			this.textBoxTreshold.Size = new System.Drawing.Size(320, 26);
 			this.textBoxTreshold.TabIndex = 1;
@@ -129,6 +129,7 @@
 			this.comboBoxGeneType.Name = "comboBoxGeneType";
 			this.comboBoxGeneType.Size = new System.Drawing.Size(320, 28);
 			this.comboBoxGeneType.TabIndex = 4;
+			this.comboBoxGeneType.Visible = false;
 			// 
 			// label3
 			// 
@@ -141,6 +142,7 @@
 			this.label3.TabIndex = 8;
 			this.label3.Text = "Gene Type:";
 			this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			this.label3.Visible = false;
 			// 
 			// geneLbl
 			// 
@@ -168,7 +170,7 @@
 			// 
 			this.textBoxMaxCliqueSize.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
 			this.textBoxMaxCliqueSize.Location = new System.Drawing.Point(235, 289);
-			this.textBoxMaxCliqueSize.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.textBoxMaxCliqueSize.Margin = new System.Windows.Forms.Padding(4);
 			this.textBoxMaxCliqueSize.Name = "textBoxMaxCliqueSize";
 			this.textBoxMaxCliqueSize.Size = new System.Drawing.Size(320, 26);
 			this.textBoxMaxCliqueSize.TabIndex = 2;
@@ -188,7 +190,7 @@
 			// 
 			this.textBoxMaxCliques.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
 			this.textBoxMaxCliques.Location = new System.Drawing.Point(235, 325);
-			this.textBoxMaxCliques.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.textBoxMaxCliques.Margin = new System.Windows.Forms.Padding(4);
 			this.textBoxMaxCliques.Name = "textBoxMaxCliques";
 			this.textBoxMaxCliques.Size = new System.Drawing.Size(320, 26);
 			this.textBoxMaxCliques.TabIndex = 3;
@@ -211,7 +213,7 @@
 			this.Controls.Add(this.CliquesDGV);
 			this.Controls.Add(this.buttonSearchFasta);
 			this.Controls.Add(this.textBoxFasta);
-			this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.Margin = new System.Windows.Forms.Padding(4);
 			this.MinimumSize = new System.Drawing.Size(1198, 756);
 			this.Name = "Form1";
 			this.Text = "Cliquely";

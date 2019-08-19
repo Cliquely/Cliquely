@@ -1,94 +1,98 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Cliquely.Exceptions;
+
 namespace Cliquely
 {
 	public partial class Form1 : Form
     {
-        public Form1()
+	    private Stopwatch Stopwatch { get; } = new Stopwatch();
+	    private readonly Dictionary<uint, string> GeneLines = new Dictionary<uint, string>();
+
+		public Form1()
         {
             InitializeComponent();
 
 			comboBoxGeneType.SelectedIndex = 0;
-		}
+	        textBoxTreshold.Text = "0.7";
+	        textBoxMaxCliqueSize.Text = "30";
+	        textBoxMaxCliques.Text = "30";
+        }
 
         private void buttonSearchFasta_Click(object sender, EventArgs e)
         {
+	        Stopwatch.Start();
+
 			CliquesDGV.DataSource = null;
 
-            searchGeneByFasta(textBoxFasta.Text);
+	        try
+	        {
+		        var gene = SearchGeneByFasteLine(textBoxFasta.Text);
+		        DiscoverCliques(gene);
+	        }
+	        catch (GeneNotFoundException)
+	        {
+		        ShowInfoMsg("Could not find a gene for the given fasta sequence and the requirements.");
+	        }
+	        catch (CliquesNotFoundException ex)
+	        {
+		        DisplayCouldNoFindAnyCliques(ex.Gene);
+	        }
         }
 
-        private void searchGeneByFasta(string fasta)
+	    private uint SearchGeneByFasteLine(string fasta)
+	    {
+		    using (var fastaLine = new StreamReader(new FileStream(ConfigurationManager.AppSettings["fastaLinePath"], FileMode.Open, FileAccess.Read)))
+		    {
+			    string line;
+
+			    while ((line = fastaLine.ReadLine()) != null)
+			    {
+					var lineArray = line.Split('\t');
+					var currentFasta = lineArray[0];
+					var genes = lineArray.Skip(1);
+
+				    if (currentFasta == fasta)
+				    {
+						return uint.Parse(genes.First());
+				    }
+			    }
+		    }
+
+		    throw new GeneNotFoundException();
+	    }
+
+	    private void ShowInfoMsg(string msg)
+	    {
+		    Invoke(new Action(() =>
+		    {
+			    geneLbl.Text = msg;
+		    }));
+	    }
+
+	    private void DiscoverCliques(uint gene)
         {
-            var sql = new SqlHelper();
+	        var maximalCliqueSize = GetMaximalCliqueSize();
+	        var maxCliques = GetMaxCliques();
 
-            var selectQuery = $"SELECT GeneFasta.Gene, GeneFasta.Fasta FROM GeneFasta WHERE GeneFasta.Fasta = \"{fasta}\"";
-            var bacteriaTable = sql.Select(selectQuery.ToString());
-
-            if (bacteriaTable.Rows.Count == 0)
-            {
-                Invoke(new Action(() => { geneLbl.Text = "Could not find a gene for the given fasta sequence and the requirements."; }));
-                return;
-            }
-
-            selectQuery = $"SELECT Gene.HomGene, Gene.Id, Gene.Details, GeneData.Bacteria FROM Gene INNER JOIN GeneData ON Gene.Id = GeneData.Gene WHERE GeneData.Bacteria = \"{bacteriaTable.Rows[0][0]}\"";
-
-            DataTable geneTable = sql.Select(selectQuery.ToString());
-
-            var gene = uint.Parse(geneTable.Rows[0][1].ToString());
-
-            Invoke(new Action(() => {
-                var geneDetails = getGeneLine(gene, true);
-                geneLbl.Text = $"Gene: {geneDetails} was found for the given fasta sequence.\nStarts searching for cliques with the given gene.";
-            }));
-
-            discoverCliques(gene);
-        }
-
-		private void discoverCliques(uint gene)
-        {
-			Dictionary<uint, Dictionary<uint, float>> probabilities;
-			Dictionary<string, List<uint>> reversed_cleaned_data;
-	        Dictionary<uint, float> geneNeighboursProbabilities;
-
-			var geneType = (string)Invoke(new Func<string>(() => comboBoxGeneType.SelectedItem.ToString()));
-
-			if (geneType == "Homology")
-			{
-				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), true, out geneNeighboursProbabilities);// gets orthoGeneId and return hom genes probabilities.
-				reversed_cleaned_data = getReversedCleanedDataHom(gene); // gets orthoGeneId
-				gene = getHomGeneId(gene); // must be after 'getReversedCleanedDataHom(..)'
-			}
-			else
-			{
-				probabilities = ProbabilitiesCalculator.GetProbabilitiesForGene(gene, float.Parse(textBoxTreshold.Text), false, out geneNeighboursProbabilities);
-				reversed_cleaned_data = getReversedCleanedDataOrtho(gene);
-			}
+			var probabilitiesCalculator = new ProbabilitiesCalculator(gene, float.Parse(textBoxTreshold.Text));
+			var probabilities = probabilitiesCalculator.GetProbabilities();
 
 			if (probabilities == null)
 			{
-				displayCouldNoFindAnyCliques(gene);
-				return;
+				throw new CliquesNotFoundException(gene);
 			}
 
-            if (!int.TryParse(textBoxMaxCliqueSize.Text, out var maximalCliqueSize))
-            {
-                Invoke(new Action(() => { geneLbl.Text = $"Maximal clique size must be an positive integer: {maximalCliqueSize}."; }));
-            }
-
-            if (!int.TryParse(textBoxMaxCliques.Text, out var maxCliques))
-            {
-                Invoke(new Action(() => { geneLbl.Text = $"Maximum cliques must be an positive integer: {maxCliques}."; }));
-            }
-
 	        var sortedGenes = probabilities.Keys
-		        .OrderByDescending(v => geneNeighboursProbabilities[v])
-		        .ThenBy(v => probabilities[v].Count)
+		        .OrderByDescending(v => probabilities[v].Count)
+		        .ThenByDescending(v => probabilitiesCalculator.GeneNeighboursProbabilities[v])
 		        .ThenByDescending(v => v).ToList();
 
 			var discoverCliques = new DiscoverCliques(gene, sortedGenes, probabilities, maximalCliqueSize, maxCliques);
@@ -96,37 +100,56 @@ namespace Cliquely
 
             if (discoverCliques.Cliques.Count == 0)
             {
-				displayCouldNoFindAnyCliques(gene);
-				return;
+	            throw new CliquesNotFoundException(gene);
 			}
 
-			Invoke(new Action(() => { geneLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene (loading):"; }));
+			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene (loading):");
 
 			if (discoverCliques.Cliques.Count <= 100)
 			{
-				displayCliquesInGridView(discoverCliques.Cliques, gene, reversed_cleaned_data);
+				DisplayCliquesInGridView(discoverCliques.Cliques, gene, probabilitiesCalculator.ReversedCleanedData);
 			}
 
-            exportCliquesToCSVFile(discoverCliques.Cliques, gene, reversed_cleaned_data);
+            ExportCliquesToCsvFile(discoverCliques.Cliques, gene, probabilitiesCalculator.ReversedCleanedData);
 
-            Invoke(new Action(() => { geneLbl.Text = $"{geneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene:"; }));
+			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene:");
 		}
 
-		private void displayCouldNoFindAnyCliques(uint gene)
+	    private int GetMaxCliques()
+	    {
+		    if (!int.TryParse(textBoxMaxCliques.Text, out var maxCliques))
+		    {
+			    ShowInfoMsg($"Maximum cliques must be an positive integer: {maxCliques}.");
+		    }
+
+		    return maxCliques;
+	    }
+
+	    private int GetMaximalCliqueSize()
+	    {
+		    if (!int.TryParse(textBoxMaxCliqueSize.Text, out var maximalCliqueSize))
+		    {
+			    ShowInfoMsg($"Maximal clique size must be an positive integer: {maximalCliqueSize}.");
+		    }
+
+		    return maximalCliqueSize;
+	    }
+
+	    private void DisplayCouldNoFindAnyCliques(uint gene)
 		{
-			Invoke(new Action(() => { geneLbl.Text = $"{geneFounded(gene)}\nCould not find any cliques for the given gene."; }));
+			ShowInfoMsg($"{GeneFounded(gene)}\nCould not find any cliques for the given gene.");
 		}
 
-		private string geneFounded(uint gene)
+		private string GeneFounded(uint gene)
 		{
-			var geneDetails = getGeneLine(gene);
+			var geneDetails = GetGeneLine(gene);
 
 			return $"Gene: {geneDetails} was found most suitable for the given fasta sequence.";
 		}
 
-		private void displayCliquesInGridView(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
+		private void DisplayCliquesInGridView(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversedCleanedData)
 		{
-			DataTable table = new DataTable();
+			var table = new DataTable();
 
 			table.Columns.Add("Gene");
 			table.Columns.Add("Probability");
@@ -136,7 +159,7 @@ namespace Cliquely
 			foreach (var clique in cliques)
             {
                 var row = table.NewRow();
-                var cliqueRowItems = getCliqueRowItems(clique, gene, reversed_cleaned_data);
+                var cliqueRowItems = GetCliqueRowItems(clique, gene, reversedCleanedData);
 
                 while (clique.Count > table.Columns.Count - 4)
                 {
@@ -148,50 +171,49 @@ namespace Cliquely
                 table.Rows.Add(row);
             }
 
-            this.Invoke(new Action(() =>
+            Invoke(new Action(() =>
 			{
 				CliquesDGV.DataSource = table;
 			}));
 		}
 
-        private List<string> getCliqueRowItems(List<uint> clique, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
+        private List<string> GetCliqueRowItems(List<uint> clique, uint gene, Dictionary<string, List<uint>> reversedCleanedData)
 		{
 			var cliqueRowItems = new List<string>();
 
 			clique.Sort();
-			int incidence = calculateIncidence(clique, reversed_cleaned_data.Values.ToList());
 
-            cliqueRowItems.Add(getGeneLine(gene));
+			var incidence = CalculateIncidence(clique, reversedCleanedData.Values.ToList());
+
+            cliqueRowItems.Add(GetGeneLine(gene));
             cliqueRowItems.Add(textBoxTreshold.Text);
 			cliqueRowItems.Add(incidence.ToString());
 
 			cliqueRowItems.Add(clique.Count.ToString());
-			cliqueRowItems.AddRange(clique.Select(x => getGeneLine(x)));
+			cliqueRowItems.AddRange(clique.Select(x => GetGeneLine(x)));
 
 			return cliqueRowItems;
 		}
 
-		private void exportCliquesToCSVFile(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversed_cleaned_data)
+		private void ExportCliquesToCsvFile(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversedCleanedData)
 		{
 			var csv = new StringBuilder();
-
 			csv.AppendLine("Gene, Probability, Incidence, Count");
-			cliques.ForEach(clique => csv.AppendLine(string.Join(",", makeCsvCompatible(getCliqueRowItems(clique, gene, reversed_cleaned_data)))));
+			cliques.ForEach(clique => csv.AppendLine(string.Join(",", MakeCsvCompatible(GetCliqueRowItems(clique, gene, reversedCleanedData)))));
 
 			using (var writer = new StreamWriter($"Cliques {gene}.csv"))
 			{
 				writer.Write(csv.ToString());
 			}
 
+			ShowInfoMsg("Saves cliques to csv file");
 			Invoke(new Action(() =>
 			{
-				geneLbl.Text = "Saves cliques to csv file";
-
 				MessageBox.Show("Exported all cliques to Cliques.csv");
 			}));
 		}
 
-        private List<string> makeCsvCompatible(List<string> items)
+        private List<string> MakeCsvCompatible(List<string> items)
         {
             for (var i = 0; i < items.Count; i++)
             {
@@ -201,23 +223,22 @@ namespace Cliquely
             return items;
         }
 
-        private int calculateIncidence(List<uint> i_CliqueVerticesIDs, List<List<uint>> i_CleanedDataReverse)
+        private int CalculateIncidence(List<uint> cliqueVerticesIDs, List<List<uint>> cleanedDataReverse)
 		{
-			int count = 0;
-			i_CliqueVerticesIDs.Sort();
+			var count = 0;
+			cliqueVerticesIDs.Sort();
 
-			foreach (List<uint> bacteria in i_CleanedDataReverse)
+			foreach (var bacteria in cleanedDataReverse)
 			{
-				if (bacteria.Count >= i_CliqueVerticesIDs.Count)
+				if (bacteria.Count >= cliqueVerticesIDs.Count)
 				{
-					var intersection = IntersectSorted(i_CliqueVerticesIDs, bacteria).ToList();
-					var f = i_CliqueVerticesIDs.Where(x => !intersection.Contains(x));
+					var intersection = IntersectSorted(cliqueVerticesIDs, bacteria).ToList();
+					var f = cliqueVerticesIDs.Where(x => !intersection.Contains(x));
 					var intersectionCount = intersection.Count;
 
-					if (intersectionCount == i_CliqueVerticesIDs.Count)
+					if (intersectionCount == cliqueVerticesIDs.Count)
 					{
 						count++;
-						System.Diagnostics.Debug.Write((i_CleanedDataReverse.FindIndex((b) => b == bacteria) + 1) + ", ");
 					}
 				}
 			}
@@ -239,7 +260,7 @@ namespace Cliquely
 
 				while (true)
 				{
-					int comparison = value1.CompareTo(value2);
+					var comparison = value1.CompareTo(value2);
 					if (comparison < 0)
 					{
 						if (!cursor1.MoveNext())
@@ -275,76 +296,37 @@ namespace Cliquely
 			e.Column.FillWeight = 10;
 		}
 
-		private static Dictionary<string, List<uint>> getReversedCleanedDataHom(uint geneId)
+		private string GetGeneLine(uint id)
 		{
-			var sql = new SqlHelper();
-			var homDataTable = sql.Select($"select  gene.homgene as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene where bacteria.bacteria in (SELECT bacteria FROM Bacteria WHERE Gene = {geneId}) order by gene.homgene");
-
-			return getReversedCleanedData(homDataTable);
-		}
-
-		private static Dictionary<string, List<uint>> getReversedCleanedDataOrtho(uint geneId)
-		{
-			var sql = new SqlHelper();
-			var orthoDataTable = sql.Select($"select gene.id as `Gene`, bacteria.bacteria as `Bacteria` from gene join bacteria on gene.id = bacteria.gene where bacteria.bacteria in (SELECT bacteria FROM Bacteria WHERE Gene = {geneId}) order by gene.id");
-
-			return getReversedCleanedData(orthoDataTable);
-		}
-
-		private static Dictionary<string, List<uint>> getReversedCleanedData(DataTable i_DataTable)
-		{
-			var reversedCleanedData = new Dictionary<string, List<uint>>();
-
-			foreach (DataRow row in i_DataTable.Rows)
-			{
-				var bacteria = row["Bacteria"].ToString();
-				var gene = uint.Parse(row["Gene"].ToString());
-
-				if (!reversedCleanedData.Keys.Contains(bacteria))
-				{
-					reversedCleanedData.Add(bacteria, new List<uint>());
-				}
-
-				reversedCleanedData[bacteria].Add(gene);
-			}
-
-			return reversedCleanedData.Select(x => new { key = x.Key, val = x.Value.Distinct().ToList() }).ToDictionary(x => x.key, x => x.val);
-		}
-
-
-        Dictionary<uint, string> geneLines = new Dictionary<uint, string>();
-
-		private string getGeneLine(uint id, bool enforceOrthology = false)
-		{
-            if (!geneLines.ContainsKey(id))
+            if (!GeneLines.ContainsKey(id))
             {
-                geneLines.Add(id, getGeneLineFromDB(id, enforceOrthology));
+                GeneLines.Add(id, GetGeneLineFromFile(id));
             }
 
-            return geneLines[id];
+            return GeneLines[id];
 		}
 
-        private string getGeneLineFromDB(uint id, bool enforceOrthology = false)
-        {
-            DataTable dataTable;
-            var sql = new SqlHelper();
-            var geneType = (string)Invoke(new Func<string>(() => comboBoxGeneType.SelectedItem.ToString()));
+	    private string GetGeneLineFromFile(uint id)
+	    {
+		    var idStr = id.ToString();
 
-            if (enforceOrthology || geneType != "Homology")
-            {
-                dataTable = sql.Select($"select details from gene where id = {id}");
-            }
-            else
-            {
-                dataTable = sql.Select($"select details from gene where homgene = {id}");
-            }
+		    using (var geneLine = new StreamReader(new FileStream(ConfigurationManager.AppSettings["GeneLinePath"], FileMode.Open, FileAccess.Read)))
+		    {
+			    string line;
 
-            return dataTable.Rows[0][0].ToString();
-        }
+			    while ((line = geneLine.ReadLine()) != null)
+			    {
+				    var lineArray = line.Split('\t');
+				    var currentGeneId = lineArray[0];
 
-		private uint getHomGeneId(uint ortoGeneId)
-		{
-			return uint.Parse(new SqlHelper().Select($"select homgene from gene where id = {ortoGeneId}").Rows[0][0].ToString());
+				    if (currentGeneId == idStr)
+				    {
+					    return line;
+				    }
+			    }
+		    }
+
+		    throw new Exception();
 		}
 	}
 }

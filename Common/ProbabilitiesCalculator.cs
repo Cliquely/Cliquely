@@ -1,84 +1,68 @@
-﻿using System.Collections.Generic;
-using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Cliquely
 {
-	public static class ProbabilitiesCalculator
-    {
-        private static readonly string[] emptyChars = { " ", "\t" };
+	public class ProbabilitiesCalculator
+	{
+		private readonly string[] EmptyChars = { " ", "\t" };
 
-        public static Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesForGene(uint i_Gene, float i_Probability, bool isHomology, out Dictionary<uint, float> GeneNeighboursProbabilities)
+		public Dictionary<uint, float> GeneNeighboursProbabilities { get; private set; }
+		public Dictionary<string, List<uint>> ReversedCleanedData { get; }
+		private Dictionary<uint, string[]> CleanedData { get; }
+		private uint  SourceGene { get; }
+		private float Probability { get; }
+
+		public ProbabilitiesCalculator(uint sourceGene, float probability)
 		{
-			var sql = new SqlHelper();
-			var reversed_cleaned_data = new Dictionary<string, List<uint>>();
-			var cleaned_data = new Dictionary<uint, string[]>();
-			var genesToUse = new Dictionary<uint, int>();
-			var bacteriasForGene = new List<string>();
+			SourceGene = sourceGene;
+			Probability = probability;
 
-			var bacteriasForGeneTable = sql.Select("SELECT * FROM Bacteria WHERE Gene = " + i_Gene);
+			CleanedData = GetCleanedData(ConfigurationManager.AppSettings["cleanedDataPath"]);
+			ReversedCleanedData = GetReversedCleanedData(ConfigurationManager.AppSettings["reversedCleanedDataPath"]);
+		}
 
-			foreach (DataRow row in bacteriasForGeneTable.Rows)
+		public Dictionary<uint, Dictionary<uint, float>> GetProbabilities()
+		{
+			var sourceGeneNeighbours = GetSourceGeneNeighbours();
+			FilterInNotEnoughBacteria(sourceGeneNeighbours);
+
+			var bacteriaForNeighbours = GetBacteriaForNeighbours(sourceGeneNeighbours);
+			GeneNeighboursProbabilities = CalculateProbabilitiesWithGenes(SourceGene, bacteriaForNeighbours);
+			FilterByThresholdProbability(bacteriaForNeighbours, sourceGeneNeighbours);
+
+			bacteriaForNeighbours = bacteriaForNeighbours.Where(x => sourceGeneNeighbours.Keys.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+
+			var probabilities = GetProbabilitiesNetwork(bacteriaForNeighbours);
+
+			return probabilities.Count > 0 ? probabilities : null;
+		}
+
+		private Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesNetwork(Dictionary<uint, string[]> bacteriaForNeighbours)
+		{
+			var probabilities = new Dictionary<uint, Dictionary<uint, float>>();
+
+			foreach (var gene in bacteriaForNeighbours.Keys)
 			{
-				bacteriasForGene.Add(row.Field<string>("Bacteria"));
-			}
+				var dic = CalculateProbabilitiesWithGenes(gene, bacteriaForNeighbours);
 
-			var cleanDataTable = sql.Select($"select * from bacteria where bacteria.bacteria in (select bacteria from bacteria where gene = {i_Gene}) or bacteria.gene = {i_Gene}");
-
-			foreach (var bacteria in bacteriasForGene)
-			{
-				var bacteriaRows = cleanDataTable.Select("Bacteria='" + bacteria.ToString() + "'");
-				reversed_cleaned_data.Add(bacteria, getGenesForBacteria(bacteriaRows));
-			}
-
-			foreach (var bacteria in bacteriasForGene)
-			{
-				foreach (var gene in reversed_cleaned_data[bacteria])
+				if (dic.Count > 0)
 				{
-					if (!genesToUse.ContainsKey(gene))
-					{
-						genesToUse.Add(gene, 1);
-					}
-					else
-					{
-						genesToUse[gene] = genesToUse[gene] + 1;
-					}
+					probabilities.Add(gene, dic);
 				}
 			}
 
+			return probabilities;
+		}
+
+		private void FilterByThresholdProbability(Dictionary<uint, string[]> bacteriaForNeighbours, Dictionary<uint, int> sourceGeneNeighbours)
+		{
 			var toDelete = new List<uint>();
 
-			foreach (var gene in genesToUse)
-			{
-				if (gene.Value < bacteriasForGene.Count * i_Probability)
-				{
-					toDelete.Add(gene.Key);
-				}
-			}
-
-			foreach (var gene in toDelete)
-			{
-				genesToUse.Remove(gene);
-			}
-
-			foreach (var i in genesToUse.Keys)
-			{
-				var geneRows = cleanDataTable.Select("Gene=" + i.ToString());
-				cleaned_data.Add(i, getBacteriasForGene(geneRows));
-			}
-
-			var potentialGenes = new Dictionary<uint, string[]>();
-
-			foreach (uint gene in genesToUse.Keys)
-			{
-				potentialGenes.Add(gene, cleaned_data[gene]);
-			}
-
-			GeneNeighboursProbabilities = calculateProbabilitiesWithGenes(i_Gene, potentialGenes, i_Probability);
-			toDelete.Clear();
-
-			foreach (uint gene in potentialGenes.Keys)
+			foreach (var gene in bacteriaForNeighbours.Keys)
 			{
 				if (!GeneNeighboursProbabilities.ContainsKey(gene))
 				{
@@ -86,150 +70,150 @@ namespace Cliquely
 				}
 			}
 
-			foreach (uint gene in toDelete)
+			foreach (var gene in toDelete)
 			{
-				genesToUse.Remove(gene);
+				sourceGeneNeighbours.Remove(gene);
 			}
-
-			potentialGenes.Clear();
-
-			foreach (uint gene in genesToUse.Keys)
-			{
-				potentialGenes.Add(gene, cleaned_data[gene]);
-			}
-
-			var probabilities = new Dictionary<uint, Dictionary<uint, float>>();
-
-			if (isHomology)
-			{
-				potentialGenes = ConvertOrthoGenesToHomGenes(potentialGenes);
-			}
-
-			foreach (var gene in potentialGenes.Keys)
-			{
-				var dic = calculateProbabilitiesWithGenes(gene, potentialGenes, i_Probability);
-
-				if (dic.Any())
-				{
-					probabilities.Add(gene, dic);
-				}
-			}
-
-			if (probabilities.Any())
-			{
-				return probabilities;
-			}
-
-			return null;
 		}
 
-		private static Dictionary<uint, string[]> ConvertOrthoGenesToHomGenes(Dictionary<uint, string[]> potentialGenes)
+		private Dictionary<uint, string[]> GetBacteriaForNeighbours(Dictionary<uint, int> sourceGeneNeighbours)
 		{
-			var homGenes = new Dictionary<uint, List<string>>();
-			var selectHomQuery = new StringBuilder("SELECT HomGene,Id FROM Gene WHERE ");
-			var sql = new SqlHelper();
-			var genesQueryCount = 0;
-			DataTable homDataTable;
+			var bacteriaForNeighbours = new Dictionary<uint, string[]>();
 
-			foreach (var gene in potentialGenes.Keys)
+			foreach (var gene in sourceGeneNeighbours.Keys)
 			{
-				selectHomQuery.Append($"Id = {gene} OR ");
-				genesQueryCount++;
+				bacteriaForNeighbours.Add(gene, CleanedData[gene]);
+			}
 
-				if (genesQueryCount == 999)
+			return bacteriaForNeighbours;
+		}
+
+		private void FilterInNotEnoughBacteria(Dictionary<uint, int> sourceGeneNeighbours)
+		{
+			var toDelete = new List<uint>();
+
+			foreach (var gene in sourceGeneNeighbours)
+			{
+				if (gene.Value < CleanedData[SourceGene].Length * Probability)
 				{
-					selectHomQuery.Remove(selectHomQuery.Length - 3, 3);
-					homDataTable = sql.Select(selectHomQuery.ToString());
-
-					foreach (DataRow row in homDataTable.Rows)
-					{
-						var geneId = (uint)row.Field<long>("Id");
-						var homGeneId = (uint)row.Field<long>("HomGene");
-
-						if (homGenes.ContainsKey(homGeneId))
-						{
-							homGenes[homGeneId].AddRange(potentialGenes[geneId]);
-						}
-						else
-						{
-							homGenes.Add(homGeneId, potentialGenes[geneId].ToList());
-						}
-					}
-
-					selectHomQuery = new StringBuilder("SELECT HomGene,Id FROM Gene WHERE ");
-					genesQueryCount = 0;
+					toDelete.Add(gene.Key);
 				}
 			}
 
-			if (genesQueryCount > 0)
+			foreach (var gene in toDelete)
 			{
-				selectHomQuery.Remove(selectHomQuery.Length - 3, 3);
-				homDataTable = sql.Select(selectHomQuery.ToString());
+				sourceGeneNeighbours.Remove(gene);
+			}
+		}
 
-				foreach (DataRow row in homDataTable.Rows)
+		private Dictionary<uint, int> GetSourceGeneNeighbours()
+		{
+			var sourceGeneNeighbours = new Dictionary<uint, int>();
+			var bacteriasForGene = CleanedData[SourceGene];
+
+			foreach (var bacteria in bacteriasForGene)
+			{
+				foreach (var gene in ReversedCleanedData[bacteria])
 				{
-					var geneId = (uint)row.Field<long>("Id");
-					var homGeneId = (uint)row.Field<long>("HomGene");
-
-					if (homGenes.ContainsKey(homGeneId))
+					if (!sourceGeneNeighbours.ContainsKey(gene))
 					{
-						homGenes[homGeneId].AddRange(potentialGenes[geneId]);
+						sourceGeneNeighbours.Add(gene, 1);
 					}
 					else
 					{
-						homGenes.Add(homGeneId, potentialGenes[geneId].ToList());
+						sourceGeneNeighbours[gene] = sourceGeneNeighbours[gene] + 1;
 					}
 				}
 			}
 
-			var potentialHomGenes = new Dictionary<uint, string[]>();
-
-			foreach (var pair in homGenes)
-			{
-				potentialHomGenes.Add(pair.Key, pair.Value.Distinct().ToArray());
-			}
-
-			return potentialHomGenes;
+			return sourceGeneNeighbours;
 		}
 
-		private static Dictionary<uint, float> calculateProbabilitiesWithGenes(uint i_Gene, Dictionary<uint, string[]> i_BacteriasForGene, float i_TreshHoldProbability)
-        {
-            var probabilities = new Dictionary<uint, float>(i_BacteriasForGene.Count);
+		private Dictionary<string, List<uint>> GetReversedCleanedData(string reversedCleanedDataPath)
+		{
+			var reversedCleanedData = new Dictionary<string, List<uint>>();
 
-	        foreach (var j in i_BacteriasForGene.Keys)
-            {
-                if (i_Gene != j)
-                {
-                    var probability = CalculateGeneProbability(i_BacteriasForGene[i_Gene], i_BacteriasForGene[j]);
+			using (var fileReader = new StreamReader(reversedCleanedDataPath))
+			{
+				fileReader.ReadLine();
+				fileReader.ReadLine();
+				string line;
 
-	                if (probability >= i_TreshHoldProbability)
-                    {
-                        probabilities[j] = probability;
-                    }
-                }
-            }
+				while ((line = fileReader.ReadLine()) != null)
+				{
+					reversedCleanedData.Add(line.Split(EmptyChars, StringSplitOptions.RemoveEmptyEntries)[0],
+						GetGenesForBacteria(line));
+				}
+			}
 
-            return probabilities;
-        }
+			return reversedCleanedData;
+		}
 
-        private static string[] getBacteriasForGene(IEnumerable<DataRow> i_Rows)
-        {
-	        return i_Rows.Select(row => row["Bacteria"].ToString()).ToArray();
-        }
+		private Dictionary<uint, string[]> GetCleanedData(string cleanedDataPath)
+		{
+			var cleanedData = new Dictionary<uint, string[]>();
 
-        private static List<uint> getGenesForBacteria(IEnumerable<DataRow> i_Rows)
-        {
-	        return i_Rows.Select(row => uint.Parse(row["Gene"].ToString())).ToList();
-        }
+			using (var fileReader = new StreamReader(cleanedDataPath))
+			{
+				fileReader.ReadLine();
+				fileReader.ReadLine();
 
-        public static float CalculateGeneProbability(IReadOnlyCollection<string> i_BacteriasForGene1, IReadOnlyCollection<string> i_BacteriasForGene2)
-        {
-            var amountOfIntersectedBacterias = i_BacteriasForGene1.Intersect(i_BacteriasForGene2).Count();
+				string line;
 
-            float numerator = amountOfIntersectedBacterias * amountOfIntersectedBacterias;
-            float denominator = i_BacteriasForGene1.Count * i_BacteriasForGene2.Count;
+				while ((line = fileReader.ReadLine()) != null)
+				{
+					cleanedData.Add(uint.Parse(line.Split(EmptyChars, StringSplitOptions.RemoveEmptyEntries)[0]),
+						GetBacteriasForGene(line));
+				}
+			}
 
-            return numerator / denominator;
-        }
-    }
+			return cleanedData;
+		}
+
+		private Dictionary<uint, float> CalculateProbabilitiesWithGenes(uint gene, Dictionary<uint, string[]> bacteriasForGene)
+		{
+			var probabilities = new Dictionary<uint, float>(bacteriasForGene.Count);
+
+			foreach (var j in bacteriasForGene.Keys)
+			{
+				if (gene != j)
+				{
+					var probability = CalculateGeneProbability(bacteriasForGene[gene], bacteriasForGene[j]);
+
+					if (probability >= Probability)
+					{
+						probabilities[j] = probability;
+					}
+				}
+			}
+
+			return probabilities;
+		}
+
+		private string[] GetBacteriasForGene(string fileLine)
+		{
+			var splitedFileLine = fileLine.Split(EmptyChars, StringSplitOptions.RemoveEmptyEntries);
+			var bacteriasForGene = splitedFileLine.Skip(2).ToArray();
+
+			return bacteriasForGene;
+		}
+
+		private List<uint> GetGenesForBacteria(string fileLine)
+		{
+			var splitedFileLine = fileLine.Split(EmptyChars, StringSplitOptions.RemoveEmptyEntries);
+			var bacteriasForGene = splitedFileLine.Skip(2).Select(uint.Parse).ToList();
+
+			return bacteriasForGene;
+		}
+
+		private float CalculateGeneProbability(IReadOnlyCollection<string> bacteriasForGene1, IReadOnlyCollection<string> bacteriasForGene2)
+		{
+			var amountOfIntersectedBacterias = bacteriasForGene1.Intersect(bacteriasForGene2).Count();
+
+			float numerator = amountOfIntersectedBacterias * amountOfIntersectedBacterias;
+			float denominator = bacteriasForGene1.Count * bacteriasForGene2.Count;
+
+			return numerator / denominator;
+		}
+	}
 }
