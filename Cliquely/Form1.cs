@@ -321,7 +321,7 @@ namespace Cliquely
 
 				    if (currentGeneId == idStr)
 				    {
-					    return line;
+					    return line.Replace('\t', ' ');
 				    }
 			    }
 		    }

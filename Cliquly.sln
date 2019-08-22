@@ -13,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BacteriaNetworksTests", "Ba
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common", "Common\Common.shproj", "{10C0A4AA-8092-4E63-BF3F-B842E336EA65}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CliquesGraphs", "CliquesGraphs\CliquesGraphs.csproj", "{57332555-5E45-4F29-BECD-E95799A30A03}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CliquesGraphs", "CliquesGraphs\CliquesGraphs.csproj", "{57332555-5E45-4F29-BECD-E95799A30A03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CliquesForGenome", "CliquesForGenome\CliquesForGenome.csproj", "{91BFE04F-D263-4FFF-B044-AA2ABD4DEAA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CliquesForGenome", "CliquesForGenome\CliquesForGenome.csproj", "{91BFE04F-D263-4FFF-B044-AA2ABD4DEAA9}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
