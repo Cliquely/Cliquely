@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -95,7 +94,7 @@ namespace Cliquely
 	        var maximalCliqueSize = GetMaximalCliqueSize();
 	        var maxCliques = GetMaxCliques();
 
-			var probabilitiesCalculator = new ProbabilitiesCalculator(gene, float.Parse(textBoxTreshold.Text));
+			var probabilitiesCalculator = new GeneProbabilitiesCalculator(gene, float.Parse(textBoxTreshold.Text));
 			var probabilities = probabilitiesCalculator.GetProbabilities();
 
 			if (probabilities == null)

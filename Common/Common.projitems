@@ -13,12 +13,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)DiscoverCliques\DiscoverCliques.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Exceptions\CliquesNotFoundException.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Exceptions\GeneNotFoundException.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ProbabilitiesCalculator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ProbabilitiesCalculators\GeneProbabilitiesCalculator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ProbabilitiesCalculators\ProbabilitiesCalculator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Sql\SqlHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Sql\BulkSqlHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Sql\SqlHelper.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)ProbabilitiesCalculators\" />
     <Folder Include="$(MSBuildThisFileDirectory)Sql\" />
   </ItemGroup>
 </Project>
