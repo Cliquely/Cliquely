@@ -6,19 +6,17 @@ namespace Cliquely
 {
     public class DiscoverCliques
     {
-	    private uint Gene { get; }
-	    private Random Rand { get; } = new Random();
-	    private IEnumerable<uint> PotentialGenes { get; }
-		private int MaxCliqueSize { get; }
-	    private Dictionary<uint, Dictionary<uint, float>> GenesNetwork { get; set; }
+	    protected Random Rand { get; } = new Random();
+	    protected IEnumerable<uint> PotentialGenes { get; }
+		protected int MaxCliqueSize { get; }
+	    protected Dictionary<uint, Dictionary<uint, float>> GenesNetwork { get; }
 
-		private int MaxCliques { get; }
+		protected int MaxCliques { get; }
 
         public readonly List<List<uint>> Cliques;
 
-        public DiscoverCliques(uint gene, IEnumerable<uint> potentialGenes, Dictionary<uint, Dictionary<uint, float>> genesNetwork, int maxCliqueSize, int maxCliques)
+        public DiscoverCliques(IEnumerable<uint> potentialGenes, Dictionary<uint, Dictionary<uint, float>> genesNetwork, int maxCliqueSize, int maxCliques)
         {
-	        Gene = gene;
 	        PotentialGenes = potentialGenes;
             Cliques = new List<List<uint>>();
 	        MaxCliqueSize = maxCliqueSize;
@@ -26,20 +24,17 @@ namespace Cliquely
 	        GenesNetwork = genesNetwork;
         }
 
-        public void Run()
+        public virtual void Run()
         {
-            var excludedVertices = new List<uint>();
-            var possibleCliqueVertices = new List<uint>(PotentialGenes);
-
 	        BronKerbosch2(
-                new List<uint> { Gene },
-                possibleCliqueVertices,
-                excludedVertices
-            );
+		        cliqueVertices: new List<uint> (),
+		        possibleCliqueVertices: new List<uint>(PotentialGenes),
+		        excludedVertices: new List<uint>()
+			);
 
         }
 
-        private void BronKerbosch2(List<uint> cliqueVertices, List<uint> possibleCliqueVertices, List<uint> excludedVertices) // R P X
+        protected virtual void BronKerbosch2(List<uint> cliqueVertices, List<uint> possibleCliqueVertices, List<uint> excludedVertices) // R P X
         { 
 			if (possibleCliqueVertices.Count == 0 && excludedVertices.Count == 0)
             {
@@ -76,24 +71,24 @@ namespace Cliquely
             }
         }
 
-        private void NotifyNewClique(List<uint> cliqueVertices)
+        protected virtual void NotifyNewClique(List<uint> cliqueVertices)
         {
             Cliques.Add(cliqueVertices);
         }
 
-        private IEnumerable<uint> getNeighbours(uint id)
+        protected IEnumerable<uint> getNeighbours(uint id)
         {
             return GenesNetwork[id].Keys;
         }
 
-        private uint SelectMaximumDegreeVertex(IEnumerable<uint> union)
+        protected uint SelectMaximumDegreeVertex(IEnumerable<uint> union)
         {
 			var maxDegree = GenesNetwork.Where(e => union.Contains(e.Key)).Max(e => e.Value.Count);
 
             return GenesNetwork.First(e => union.Contains(e.Key) & e.Value.Count == maxDegree).Key;
 		}
 
-		private uint SelectRandomVertex(IEnumerable<uint> union)
+		protected uint SelectRandomVertex(IEnumerable<uint> union)
 		{
 			var unionList = union.ToList();
 

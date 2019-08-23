@@ -149,11 +149,12 @@
 			this.geneLbl.AutoSize = true;
 			this.geneLbl.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
 			this.geneLbl.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-			this.geneLbl.Location = new System.Drawing.Point(24, 402);
+			this.geneLbl.Location = new System.Drawing.Point(24, 376);
 			this.geneLbl.MaximumSize = new System.Drawing.Size(1133, 0);
 			this.geneLbl.Name = "geneLbl";
-			this.geneLbl.Size = new System.Drawing.Size(0, 20);
+			this.geneLbl.Size = new System.Drawing.Size(36, 20);
 			this.geneLbl.TabIndex = 6;
+			this.geneLbl.Text = "Info";
 			// 
 			// label4
 			// 

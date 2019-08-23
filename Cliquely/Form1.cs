@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using Cliquely.Exceptions;
 
@@ -13,7 +14,6 @@ namespace Cliquely
 {
 	public partial class Form1 : Form
     {
-	    private Stopwatch Stopwatch { get; } = new Stopwatch();
 	    private readonly Dictionary<uint, string> GeneLines = new Dictionary<uint, string>();
 
 		public Form1()
@@ -24,28 +24,41 @@ namespace Cliquely
 	        textBoxTreshold.Text = "0.7";
 	        textBoxMaxCliqueSize.Text = "30";
 	        textBoxMaxCliques.Text = "30";
-        }
+	        geneLbl.Text = "";
+		}
 
         private void buttonSearchFasta_Click(object sender, EventArgs e)
         {
-	        Stopwatch.Start();
-
-			CliquesDGV.DataSource = null;
-
-	        try
-	        {
-		        var gene = SearchGeneByFasteLine(textBoxFasta.Text);
-		        DiscoverCliques(gene);
-	        }
-	        catch (GeneNotFoundException)
-	        {
-		        ShowInfoMsg("Could not find a gene for the given fasta sequence and the requirements.");
-	        }
-	        catch (CliquesNotFoundException ex)
-	        {
-		        DisplayCouldNoFindAnyCliques(ex.Gene);
-	        }
+	        buttonSearchFasta.Enabled = false;
+	        new Thread(Search).Start();
         }
+
+		private void Search()
+	    {
+		    CliquesDGV.DataSource = null;
+
+		    try
+		    {
+			    var gene = SearchGeneByFasteLine(textBoxFasta.Text);
+			    ShowInfoMsg(GeneFounded(gene));
+
+				DiscoverCliques(gene);
+
+			    Invoke(new Action(() => buttonSearchFasta.Enabled = true));
+		    }
+		    catch (GeneNotFoundException)
+		    {
+			    ShowInfoMsg("Could not find a gene for the given fasta sequence and the requirements.");
+		    }
+		    catch (CliquesNotFoundException ex)
+		    {
+			    DisplayCouldNoFindAnyCliques(ex.Gene);
+		    }
+		    catch (Exception)
+		    {
+			    ShowInfoMsg("Some error occured.");
+		    }
+	    }
 
 	    private uint SearchGeneByFasteLine(string fasta)
 	    {
@@ -87,7 +100,7 @@ namespace Cliquely
 
 			if (probabilities == null)
 			{
-				throw new CliquesNotFoundException(gene);
+				throw new CliquesNotFoundException{Gene = gene };
 			}
 
 	        var sortedGenes = probabilities.Keys
@@ -95,12 +108,12 @@ namespace Cliquely
 		        .ThenByDescending(v => probabilitiesCalculator.GeneNeighboursProbabilities[v])
 		        .ThenByDescending(v => v).ToList();
 
-			var discoverCliques = new DiscoverCliques(gene, sortedGenes, probabilities, maximalCliqueSize, maxCliques);
+			var discoverCliques = new DiscoverCliquesByGene(gene, sortedGenes, probabilities, maximalCliqueSize, maxCliques);
 			discoverCliques.Run();
 
             if (discoverCliques.Cliques.Count == 0)
             {
-	            throw new CliquesNotFoundException(gene);
+	            throw new CliquesNotFoundException { Gene = gene };
 			}
 
 			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene (loading):");
