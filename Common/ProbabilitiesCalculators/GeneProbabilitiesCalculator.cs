@@ -30,6 +30,43 @@ namespace Cliquely
 			return probabilities.Count > 0 ? probabilities : null;
 		}
 
+		protected override Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesNetwork(Dictionary<uint, string[]> bacteriaForNeighbours)
+		{
+			var probabilities = new Dictionary<uint, Dictionary<uint, float>>();
+
+			foreach (var gene in bacteriaForNeighbours.Keys)
+			{
+				var dic = CalculateProbabilitiesWithGenes(gene, bacteriaForNeighbours);
+
+				if (dic.Count > 0)
+				{
+					probabilities.Add(gene, dic);
+				}
+			}
+
+			return probabilities;
+		}
+
+		private Dictionary<uint, float> CalculateProbabilitiesWithGenes(uint gene, Dictionary<uint, string[]> bacteriasForGene)
+		{
+			var probabilities = new Dictionary<uint, float>(bacteriasForGene.Count);
+
+			foreach (var j in bacteriasForGene.Keys)
+			{
+				if (gene != j)
+				{
+					var probability = CalculateGeneProbability(bacteriasForGene[gene], bacteriasForGene[j]);
+
+					if (probability >= ProbabilityThreshold)
+					{
+						probabilities[j] = probability;
+					}
+				}
+			}
+
+			return probabilities;
+		}
+
 		private void FilterByThresholdProbability(Dictionary<uint, string[]> bacteriaForNeighbours, Dictionary<uint, int> sourceGeneNeighbours)
 		{
 			var toDelete = new List<uint>();
@@ -66,7 +103,7 @@ namespace Cliquely
 
 			foreach (var gene in sourceGeneNeighbours)
 			{
-				if (gene.Value < CleanedData[SourceGene].Length * Probability)
+				if (gene.Value < CleanedData[SourceGene].Length * ProbabilityThreshold)
 				{
 					toDelete.Add(gene.Key);
 				}

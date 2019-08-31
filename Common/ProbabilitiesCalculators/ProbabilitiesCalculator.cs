@@ -12,11 +12,11 @@ namespace Cliquely
 
 		protected Dictionary<uint, string[]> CleanedData { get; }
 		public Dictionary<string, List<uint>> ReversedCleanedData { get; }
-		public float Probability { get; }
+		public float ProbabilityThreshold { get; }
 
 		public ProbabilitiesCalculator(float probability)
 		{
-			Probability = probability;
+			ProbabilityThreshold = probability;
 
 			CleanedData = GetCleanedData(ConfigurationManager.AppSettings["cleanedDataPath"]);
 			ReversedCleanedData = GetReversedCleanedData(ConfigurationManager.AppSettings["reversedCleanedDataPath"]);
@@ -29,17 +29,28 @@ namespace Cliquely
 			return probabilities.Count > 0 ? probabilities : null;
 		}
 
-		protected Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesNetwork(Dictionary<uint, string[]> bacteriaForNeighbours)
+		protected virtual Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesNetwork(Dictionary<uint, string[]> bacteriaForNeighbours)
 		{
 			var probabilities = new Dictionary<uint, Dictionary<uint, float>>();
+			var keysList = bacteriaForNeighbours.Keys.ToList();
 
-			foreach (var gene in bacteriaForNeighbours.Keys)
+			for (var i = 0; i < keysList.Count; i++)
 			{
-				var dic = CalculateProbabilitiesWithGenes(gene, bacteriaForNeighbours);
+				var geneI = keysList[i];
+				probabilities[geneI] = new Dictionary<uint, float>();
 
-				if (dic.Count > 0)
+				for (var j = 0; j < i; j++)
 				{
-					probabilities.Add(gene, dic);
+					var geneJ = keysList[j];
+					probabilities[geneJ] = new Dictionary<uint, float>();
+
+					var probability = CalculateGeneProbability(bacteriaForNeighbours[geneI], bacteriaForNeighbours[geneJ]);
+
+					if (probability >= ProbabilityThreshold)
+					{
+						probabilities[geneI][geneJ] = probability;
+						probabilities[geneJ][geneI] = probability;
+					}
 				}
 			}
 
@@ -87,26 +98,6 @@ namespace Cliquely
 			return cleanedData;
 		}
 
-		protected Dictionary<uint, float> CalculateProbabilitiesWithGenes(uint gene, Dictionary<uint, string[]> bacteriasForGene)
-		{
-			var probabilities = new Dictionary<uint, float>(bacteriasForGene.Count);
-
-			foreach (var j in bacteriasForGene.Keys)
-			{
-				if (gene != j)
-				{
-					var probability = CalculateGeneProbability(bacteriasForGene[gene], bacteriasForGene[j]);
-
-					if (probability >= Probability)
-					{
-						probabilities[j] = probability;
-					}
-				}
-			}
-
-			return probabilities;
-		}
-
 		private string[] GetBacteriasForGene(string fileLine)
 		{
 			var splitedFileLine = fileLine.Split(EmptyChars, StringSplitOptions.RemoveEmptyEntries);
@@ -125,12 +116,58 @@ namespace Cliquely
 
 		protected float CalculateGeneProbability(IReadOnlyCollection<string> bacteriasForGene1, IReadOnlyCollection<string> bacteriasForGene2)
 		{
-			var amountOfIntersectedBacterias = bacteriasForGene1.Intersect(bacteriasForGene2).Count();
+			var amountOfIntersectedBacterias = IntersectSorted(bacteriasForGene1, bacteriasForGene2).Count();
 
 			float numerator = amountOfIntersectedBacterias * amountOfIntersectedBacterias;
 			float denominator = bacteriasForGene1.Count * bacteriasForGene2.Count;
 
 			return numerator / denominator;
+		}
+
+		private IEnumerable<string> IntersectSorted(IEnumerable<string> sequence1, IEnumerable<string> sequence2)
+		{
+			using (var cursor1 = sequence1.GetEnumerator())
+			using (var cursor2 = sequence2.GetEnumerator())
+			{
+				if (!cursor1.MoveNext() || !cursor2.MoveNext())
+				{
+					yield break;
+				}
+				var value1 = cursor1.Current;
+				var value2 = cursor2.Current;
+
+				while (true)
+				{
+					var comparison = value1.CompareTo(value2);
+
+					if (comparison < 0)
+					{
+						if (!cursor1.MoveNext())
+						{
+							yield break;
+						}
+						value1 = cursor1.Current;
+					}
+					else if (comparison > 0)
+					{
+						if (!cursor2.MoveNext())
+						{
+							yield break;
+						}
+						value2 = cursor2.Current;
+					}
+					else
+					{
+						yield return value1;
+						if (!cursor1.MoveNext() || !cursor2.MoveNext())
+						{
+							yield break;
+						}
+						value1 = cursor1.Current;
+						value2 = cursor2.Current;
+					}
+				}
+			}
 		}
 	}
 }

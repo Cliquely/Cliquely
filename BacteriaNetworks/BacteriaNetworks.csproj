@@ -126,6 +126,9 @@
     <Compile Include="Infrastructure\BacteriaFilterType.cs" />
     <Compile Include="Infrastructure\BacteriaProbabilityOption.cs" />
     <Compile Include="Infrastructure\EnumExtensionMethods.cs" />
+    <Compile Include="Infrastructure\Sql\BulkSqlHelper.cs" />
+    <Compile Include="Infrastructure\Sql\SqlHandler.cs" />
+    <Compile Include="Infrastructure\Sql\SqlHelper.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
