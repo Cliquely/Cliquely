@@ -41,9 +41,7 @@ namespace Cliquely
 			    var gene = SearchGeneByFasteLine(textBoxFasta.Text);
 			    ShowInfoMsg(GeneFounded(gene));
 
-				DiscoverCliques(gene);
-
-			    Invoke(new Action(() => buttonSearchFasta.Enabled = true));
+				DiscoverCliques(gene);		    
 		    }
 		    catch (GeneNotFoundException)
 		    {
@@ -53,10 +51,14 @@ namespace Cliquely
 		    {
 			    DisplayCouldNoFindAnyCliques(ex.Gene);
 		    }
-		    catch (Exception)
+		    catch (Exception e)
 		    {
 			    ShowInfoMsg("Some error occured.");
 		    }
+			finally
+			{
+				Invoke(new Action(() => buttonSearchFasta.Enabled = true));
+			}
 	    }
 
 	    private uint SearchGeneByFasteLine(string fasta)
@@ -90,44 +92,56 @@ namespace Cliquely
 	    }
 
 	    private void DiscoverCliques(uint gene)
-        {
-	        var maximalCliqueSize = GetMaximalCliqueSize();
-	        var maxCliques = GetMaxCliques();
+		{
+			var maximalCliqueSize = GetMaximalCliqueSize();
+			var maxCliques = GetMaxCliques();
 
-			var probabilitiesCalculator = new GeneProbabilitiesCalculator(gene, float.Parse(textBoxTreshold.Text));
+			float probability = float.Parse(textBoxTreshold.Text);
+			var probabilitiesCalculator = new GeneProbabilitiesCalculator(gene, probability);
 			var probabilities = probabilitiesCalculator.GetProbabilities();
 
 			if (probabilities == null)
 			{
-				throw new CliquesNotFoundException{Gene = gene };
+				throw new CliquesNotFoundException { Gene = gene };
 			}
 
-	        var sortedGenes = probabilities.Keys
-		        .OrderByDescending(v => probabilities[v].Count)
-		        .ThenByDescending(v => probabilitiesCalculator.GeneNeighboursProbabilities[v])
-		        .ThenByDescending(v => v).ToList();
+			var sortedGenes = probabilities.Keys
+				.OrderByDescending(v => probabilities[v].Count)
+				.ThenByDescending(v => probabilitiesCalculator.GeneNeighboursProbabilities[v])
+				.ThenByDescending(v => v).ToList();
+
+			if(probability == 1)
+			{
+				ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, new List<List<uint>> { sortedGenes });
+				return;
+			}
 
 			var discoverCliques = new DiscoverCliquesByGene(gene, sortedGenes, probabilities, maximalCliqueSize, maxCliques);
 			discoverCliques.Run();
 
-            if (discoverCliques.Cliques.Count == 0)
-            {
-	            throw new CliquesNotFoundException { Gene = gene };
-			}
-
-			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene (loading):");
-
-			if (discoverCliques.Cliques.Count <= 100)
+			if (discoverCliques.Cliques.Count == 0)
 			{
-				DisplayCliquesInGridView(discoverCliques.Cliques, gene, probabilitiesCalculator.ReversedCleanedData);
+				throw new CliquesNotFoundException { Gene = gene };
 			}
 
-            ExportCliquesToCsvFile(discoverCliques.Cliques, gene, probabilitiesCalculator.ReversedCleanedData);
-
-			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({discoverCliques.Cliques.Count}) that containing the given gene:");
+			ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, discoverCliques.Cliques);
 		}
 
-	    private int GetMaxCliques()
+		private void ShowCliques(uint gene, Dictionary<string, List<uint>> reversedCleanedData, List<List<uint>> cliques)
+		{
+			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene (loading):");
+
+			if (cliques.Count <= 100)
+			{
+				DisplayCliquesInGridView(cliques, gene, reversedCleanedData);
+			}
+
+			ExportCliquesToCsvFile(cliques, gene, reversedCleanedData);
+
+			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene:");
+		}
+
+		private int GetMaxCliques()
 	    {
 		    if (!int.TryParse(textBoxMaxCliques.Text, out var maxCliques))
 		    {
