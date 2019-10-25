@@ -19,7 +19,6 @@ namespace Cliquely
         {
             InitializeComponent();
 
-			comboBoxGeneType.SelectedIndex = 0;
 	        textBoxTreshold.Text = "0.7";
 	        textBoxMaxCliqueSize.Text = "30";
 	        textBoxMaxCliques.Text = "30";
@@ -334,20 +333,19 @@ namespace Cliquely
 
 	    private string GetGeneLineFromFile(uint id)
 	    {
-		    var idStr = id.ToString();
+            var currentGeneId = 1;
 
-		    using (var geneLine = new StreamReader(new FileStream(ConfigurationManager.AppSettings["GeneLinePath"], FileMode.Open, FileAccess.Read)))
+            using (var geneLine = new StreamReader(new FileStream(ConfigurationManager.AppSettings["GeneLinePath"], FileMode.Open, FileAccess.Read)))
 		    {
 			    string line;
 
 			    while ((line = geneLine.ReadLine()) != null)
 			    {
 				    var lineArray = line.Split('\t');
-				    var currentGeneId = lineArray[0];
 
-				    if (currentGeneId == idStr)
+				    if (currentGeneId++ == id)
 				    {
-					    return line.Replace('\t', ' ');
+					    return line.Replace('\t', ' ').Trim();
 				    }
 			    }
 		    }

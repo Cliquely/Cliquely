@@ -282,27 +282,26 @@ namespace CliquelyNetwork
 			return GeneLines[id];
 		}
 
-		private string GetGeneLineFromFile(uint id)
-		{
-			var idStr = id.ToString();
+        private string GetGeneLineFromFile(uint id)
+        {
+            var currentGeneId = 1;
 
-			using (var geneLine = new StreamReader(new FileStream(ConfigurationManager.AppSettings["GeneLinePath"], FileMode.Open, FileAccess.Read)))
-			{
-				string line;
+            using (var geneLine = new StreamReader(new FileStream(ConfigurationManager.AppSettings["GeneLinePath"], FileMode.Open, FileAccess.Read)))
+            {
+                string line;
 
-				while ((line = geneLine.ReadLine()) != null)
-				{
-					var lineArray = line.Split('\t');
-					var currentGeneId = lineArray[0];
+                while ((line = geneLine.ReadLine()) != null)
+                {
+                    var lineArray = line.Split('\t');
 
-					if (currentGeneId == idStr)
-					{
-						return line.Replace('\t', ' ');
-					}
-				}
-			}
+                    if (currentGeneId++ == id)
+                    {
+                        return line.Replace('\t', ' ').Trim();
+                    }
+                }
+            }
 
-			throw new Exception();
-		}
-	}
+            throw new Exception();
+        }
+    }
 }
