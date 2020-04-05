@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using BlastFromNCBI;
 using Cliquely.Exceptions;
 
 namespace Cliquely
@@ -23,63 +24,100 @@ namespace Cliquely
 	        textBoxMaxCliqueSize.Text = "30";
 	        textBoxMaxCliques.Text = "30";
 	        geneLbl.Text = "";
+
+			Blast.Finished += BlastOnFinished;
 		}
 
-        private void buttonSearchFasta_Click(object sender, EventArgs e)
+		private void BlastOnFinished(string i_rid, TimeSpan i_timesincestarted, List<BlastGene> i_genes)
+		{
+			if (i_genes == null) new GeneNotFoundException();
+
+			var gene = SearchCliques(i_genes.First().Sequence);
+
+			if (gene == null)
+			{
+				ShowInfoMsg("Could not find a gene for the given fasta sequence and the requirements.");
+			}
+
+			Invoke(new Action(() => buttonSearchFasta.Enabled = true));
+		}
+
+		private void buttonSearchFasta_Click(object sender, EventArgs e)
         {
 	        buttonSearchFasta.Enabled = false;
 	        new Thread(Search).Start();
         }
 
 		private void Search()
-	    {
-		    CliquesDGV.DataSource = null;
+		{
+			CliquesDGV.DataSource = null;
 
-		    try
-		    {
-			    var gene = SearchGeneByFasteLine(textBoxFasta.Text);
-			    ShowInfoMsg(GeneFounded(gene));
+			var fasta = textBoxFasta.Text;
+			var gene = SearchCliques(fasta);
 
-				DiscoverCliques(gene);		    
-		    }
-		    catch (GeneNotFoundException)
-		    {
-			    ShowInfoMsg("Could not find a gene for the given fasta sequence and the requirements.");
-		    }
-		    catch (CliquesNotFoundException ex)
-		    {
-			    DisplayCouldNoFindAnyCliques(ex.Gene);
-		    }
-		    catch (Exception e)
-		    {
-			    ShowInfoMsg("Some error occured.");
-		    }
-			finally
+			if (gene != null)
 			{
 				Invoke(new Action(() => buttonSearchFasta.Enabled = true));
-			}
-	    }
 
-	    private uint SearchGeneByFasteLine(string fasta)
+				return;
+			}
+
+			ShowInfoMsg("Could not find a gene for the given fasta sequence, searching in Blast...");
+
+			Blast.SendRequest(fasta);
+		}
+
+		private uint? SearchCliques(string fasta)
+		{
+			uint? gene = null;
+
+			try
+			{
+				gene = SearchFastaInFastaLine(fasta);
+
+				if (gene != null)
+				{
+					ShowInfoMsg(GeneFounded(gene.Value));
+					DiscoverCliques(gene.Value);
+				}
+			}
+			catch (GeneNotFoundException)
+			{
+				ShowInfoMsg("Could not find a gene for the given fasta sequence and the requirements.");
+			}
+			catch (CliquesNotFoundException ex)
+			{
+				DisplayCouldNoFindAnyCliques(ex.Gene);
+			}
+			catch (Exception e)
+			{
+				ShowInfoMsg("Some error occured.");
+			}
+
+			return gene;
+		}
+
+		private uint? SearchFastaInFastaLine(string fasta)
 	    {
-		    using (var fastaLine = new StreamReader(new FileStream(ConfigurationManager.AppSettings["fastaLinePath"], FileMode.Open, FileAccess.Read)))
+			using (var fastaLine = new StreamReader(new FileStream(ConfigurationManager.AppSettings["fastaLinePath"],
+			    FileMode.Open, FileAccess.Read)))
 		    {
 			    string line;
 
 			    while ((line = fastaLine.ReadLine()) != null)
 			    {
-					var lineArray = line.Split('\t');
-					var currentFasta = lineArray[0];
-					var genes = lineArray.Skip(1);
+				    var lineArray = line.Split('\t');
+				    var currentFasta = lineArray[0];
+				    var genes = lineArray.Skip(1);
 
 				    if (currentFasta == fasta)
 				    {
 						return uint.Parse(genes.First());
-				    }
+					}
 			    }
 		    }
 
-		    throw new GeneNotFoundException();
+		    return null;
 	    }
 
 	    private void ShowInfoMsg(string msg)
