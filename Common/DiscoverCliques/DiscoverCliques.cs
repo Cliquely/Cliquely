@@ -15,6 +15,8 @@ namespace Cliquely
 
         public readonly List<List<uint>> Cliques;
 
+        public int AmountOfCliquesLargerThanMaxCliqueSize = 0;
+
         public DiscoverCliques(IEnumerable<uint> potentialGenes, Dictionary<uint, Dictionary<uint, float>> genesNetwork, int maxCliqueSize, int maxCliques)
         {
 	        PotentialGenes = potentialGenes;
@@ -48,6 +50,7 @@ namespace Cliquely
 
             if (cliqueVertices.Count == MaxCliqueSize)
             {
+                AmountOfCliquesLargerThanMaxCliqueSize++;
                 return;
             }
 

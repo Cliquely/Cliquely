@@ -30,7 +30,7 @@ namespace Cliquely
 
 		private void BlastOnFinished(string i_rid, TimeSpan i_timesincestarted, List<BlastGene> i_genes)
 		{
-			if (i_genes == null) new GeneNotFoundException();
+			if (i_genes == null) throw new GeneNotFoundException();
 
 			var gene = SearchCliques(i_genes.First().Sequence);
 
@@ -149,7 +149,7 @@ namespace Cliquely
 
 			if(probability == 1)
 			{
-				ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, new List<List<uint>> { sortedGenes });
+				ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, new List<List<uint>> { sortedGenes }, 0);
 				return;
 			}
 
@@ -161,12 +161,13 @@ namespace Cliquely
 				throw new CliquesNotFoundException { Gene = gene };
 			}
 
-			ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, discoverCliques.Cliques);
+			ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, discoverCliques.Cliques, discoverCliques.AmountOfCliquesLargerThanMaxCliqueSize);
 		}
 
-		private void ShowCliques(uint gene, Dictionary<string, List<uint>> reversedCleanedData, List<List<uint>> cliques)
+		private void ShowCliques(uint gene, Dictionary<string, List<uint>> reversedCleanedData, List<List<uint>> cliques, int amountOfDismissedCliquesBySize)
 		{
-			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene (loading):");
+			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene. {Environment.NewLine}" +
+				$"{amountOfDismissedCliquesBySize} were dismissed because they were too large (loading):");
 
 			if (cliques.Count <= 100)
 			{
@@ -175,7 +176,8 @@ namespace Cliquely
 
 			ExportCliquesToCsvFile(cliques, gene, reversedCleanedData);
 
-			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene:");
+			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene. {Environment.NewLine}" +
+				$"{amountOfDismissedCliquesBySize} were dismissed because they were too large:");
 		}
 
 		private int GetMaxCliques()
