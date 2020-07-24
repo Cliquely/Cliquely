@@ -1,4 +1,5 @@
 ﻿using System;
+using Cliquely;
 
 namespace CliquesGraphs
 {
@@ -19,13 +20,5 @@ namespace CliquesGraphs
         {
             return Taxonomy.GetHashCode() + Abbrev.GetHashCode() + Size.GetHashCode();
         }
-    }
-
-    [Flags]
-    public enum eTaxonomy
-    {
-        Archaea = 1,
-        Bacteria = 2,
-        Eukaryota = 4
     }
 }
