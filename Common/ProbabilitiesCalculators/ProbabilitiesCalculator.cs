@@ -12,14 +12,46 @@ namespace Cliquely
 
 		protected Dictionary<uint, string[]> CleanedData { get; }
 		public Dictionary<string, List<uint>> ReversedCleanedData { get; }
+		public Dictionary<string, eTaxonomy> GenomeLine { get; }
 		public float ProbabilityThreshold { get; }
+		public eTaxonomy Taxonomy { get; }
 
-		public ProbabilitiesCalculator(float probability)
+		public ProbabilitiesCalculator(float probabilityThreshold, eTaxonomy taxonomy)
 		{
-			ProbabilityThreshold = probability;
+			ProbabilityThreshold = probabilityThreshold;
+			Taxonomy = taxonomy;
 
 			CleanedData = GetCleanedData(ConfigurationManager.AppSettings["cleanedDataPath"]);
 			ReversedCleanedData = GetReversedCleanedData(ConfigurationManager.AppSettings["reversedCleanedDataPath"]);
+			GenomeLine = GetGenomeLine(ConfigurationManager.AppSettings["genomeLinePath"]);
+
+			FilterCleanedDataBacteriaByTaxonomy();
+		}
+
+		private void FilterCleanedDataBacteriaByTaxonomy()
+		{
+			if (Taxonomy == eTaxonomy.All) return;
+
+			var filteredGenes = new List<uint>();
+			var filteredCleanedData = new Dictionary<uint, string[]>();
+
+			foreach (var gene in CleanedData.Keys)
+			{
+				var filteredBacteria = CleanedData[gene].ToList().Where(
+					bacteria => GenomeLine.ContainsKey(bacteria) && (GenomeLine[bacteria] & Taxonomy) != 0).ToArray();
+
+				if (filteredBacteria.Any())
+				{
+					filteredCleanedData[gene] = filteredBacteria;
+				}
+				else
+				{
+					filteredGenes.Add(gene);
+				}
+			}
+
+			filteredGenes.ForEach(gene => CleanedData.Remove(gene));
+			filteredCleanedData.Keys.ToList().ForEach(gene => CleanedData[gene] = filteredCleanedData[gene]);
 		}
 
 		public virtual Dictionary<uint, Dictionary<uint, float>> GetProbabilities()
@@ -90,12 +122,35 @@ namespace Cliquely
 
 				while ((line = fileReader.ReadLine()) != null)
 				{
-					cleanedData.Add(uint.Parse(line.Split(EmptyChars, StringSplitOptions.RemoveEmptyEntries)[0]),
-						GetBacteriasForGene(line));
+					var gene = uint.Parse(line.Split(EmptyChars, StringSplitOptions.RemoveEmptyEntries)[0]);
+
+					cleanedData.Add(gene, GetBacteriasForGene(line));
 				}
 			}
 
 			return cleanedData;
+		}
+
+		private Dictionary<string, eTaxonomy> GetGenomeLine(string genomeLinePath)
+		{
+			var genomeLine = new Dictionary<string, eTaxonomy>();
+
+			using (var fileReader = new StreamReader(genomeLinePath))
+			{
+				string line;
+
+				while ((line = fileReader.ReadLine()) != null)
+				{
+					var lineArray = line.Split('\t');
+
+					if (Enum.TryParse(lineArray[0], true, out eTaxonomy taxonomy))
+					{
+						genomeLine.Add(lineArray[1], taxonomy);
+					}
+				}
+			}
+
+			return genomeLine;
 		}
 
 		private string[] GetBacteriasForGene(string fileLine)

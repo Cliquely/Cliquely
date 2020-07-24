@@ -9,15 +9,17 @@ namespace Cliquely
 
 		private uint SourceGene { get; }
 
-		public GeneProbabilitiesCalculator(uint sourceGene, float probability) : base(probability)
+		public GeneProbabilitiesCalculator(uint sourceGene, float probabilityThreshold, eTaxonomy taxonomy) : base(probabilityThreshold, taxonomy)
 		{
 			SourceGene = sourceGene;
 		}
 
 		public override Dictionary<uint, Dictionary<uint, float>> GetProbabilities()
 		{
+			if (!CleanedData.ContainsKey(SourceGene)) return null;
+			
 			var sourceGeneNeighbours = GetSourceGeneNeighbours();
-			FilterInNotEnoughBacteria(sourceGeneNeighbours);
+			FilterByOccurrenceInBacteriaThreshold(sourceGeneNeighbours);
 
 			var bacteriaForNeighbours = GetBacteriaForNeighbours(sourceGeneNeighbours);
 			GeneNeighboursProbabilities = CalculateProbabilitiesWithGenes(SourceGene, bacteriaForNeighbours);
@@ -30,21 +32,47 @@ namespace Cliquely
 			return probabilities.Count > 0 ? probabilities : null;
 		}
 
-		protected override Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesNetwork(Dictionary<uint, string[]> bacteriaForNeighbours)
+		private Dictionary<uint, int> GetSourceGeneNeighbours()
 		{
-			var probabilities = new Dictionary<uint, Dictionary<uint, float>>();
+			var sourceGeneNeighbours = new Dictionary<uint, int>();
+			var bacteriasForGene = CleanedData[SourceGene];
 
-			foreach (var gene in bacteriaForNeighbours.Keys)
+			foreach (var bacteria in bacteriasForGene)
 			{
-				var dic = CalculateProbabilitiesWithGenes(gene, bacteriaForNeighbours);
-
-				if (dic.Count > 0)
+				foreach (var gene in ReversedCleanedData[bacteria])
 				{
-					probabilities.Add(gene, dic);
+					if (!sourceGeneNeighbours.ContainsKey(gene))
+					{
+						sourceGeneNeighbours.Add(gene, 1);
+					}
+					else
+					{
+						sourceGeneNeighbours[gene] = sourceGeneNeighbours[gene] + 1;
+					}
 				}
 			}
 
-			return probabilities;
+			return sourceGeneNeighbours;
+		}
+
+		private void FilterByOccurrenceInBacteriaThreshold(Dictionary<uint, int> sourceGeneNeighbours)
+		{
+			var toDelete = new List<uint>();
+
+			foreach (var gene in sourceGeneNeighbours)
+			{
+				if (gene.Value < CleanedData[SourceGene].Length * ProbabilityThreshold)
+				{
+					toDelete.Add(gene.Key);
+				}
+			}
+
+			toDelete.ForEach(gene => sourceGeneNeighbours.Remove(gene));
+		}
+
+		private Dictionary<uint, string[]> GetBacteriaForNeighbours(Dictionary<uint, int> sourceGeneNeighbours)
+		{
+			return sourceGeneNeighbours.Keys.ToDictionary(gene => gene, gene => CleanedData[gene]);
 		}
 
 		private Dictionary<uint, float> CalculateProbabilitiesWithGenes(uint gene, Dictionary<uint, string[]> bacteriasForGene)
@@ -69,73 +97,27 @@ namespace Cliquely
 
 		private void FilterByThresholdProbability(Dictionary<uint, string[]> bacteriaForNeighbours, Dictionary<uint, int> sourceGeneNeighbours)
 		{
-			var toDelete = new List<uint>();
+			var toDelete = bacteriaForNeighbours.Keys.Where(gene => !GeneNeighboursProbabilities.ContainsKey(gene)).ToList();
+
+			toDelete.ForEach(gene => sourceGeneNeighbours.Remove(gene));
+		}
+
+
+		protected override Dictionary<uint, Dictionary<uint, float>> GetProbabilitiesNetwork(Dictionary<uint, string[]> bacteriaForNeighbours)
+		{
+			var probabilities = new Dictionary<uint, Dictionary<uint, float>>();
 
 			foreach (var gene in bacteriaForNeighbours.Keys)
 			{
-				if (!GeneNeighboursProbabilities.ContainsKey(gene))
+				var dic = CalculateProbabilitiesWithGenes(gene, bacteriaForNeighbours);
+
+				if (dic.Count > 0)
 				{
-					toDelete.Add(gene);
+					probabilities.Add(gene, dic);
 				}
 			}
 
-			foreach (var gene in toDelete)
-			{
-				sourceGeneNeighbours.Remove(gene);
-			}
-		}
-
-		private Dictionary<uint, string[]> GetBacteriaForNeighbours(Dictionary<uint, int> sourceGeneNeighbours)
-		{
-			var bacteriaForNeighbours = new Dictionary<uint, string[]>();
-
-			foreach (var gene in sourceGeneNeighbours.Keys)
-			{
-				bacteriaForNeighbours.Add(gene, CleanedData[gene]);
-			}
-
-			return bacteriaForNeighbours;
-		}
-
-		private void FilterInNotEnoughBacteria(Dictionary<uint, int> sourceGeneNeighbours)
-		{
-			var toDelete = new List<uint>();
-
-			foreach (var gene in sourceGeneNeighbours)
-			{
-				if (gene.Value < CleanedData[SourceGene].Length * ProbabilityThreshold)
-				{
-					toDelete.Add(gene.Key);
-				}
-			}
-
-			foreach (var gene in toDelete)
-			{
-				sourceGeneNeighbours.Remove(gene);
-			}
-		}
-
-		private Dictionary<uint, int> GetSourceGeneNeighbours()
-		{
-			var sourceGeneNeighbours = new Dictionary<uint, int>();
-			var bacteriasForGene = CleanedData[SourceGene];
-
-			foreach (var bacteria in bacteriasForGene)
-			{
-				foreach (var gene in ReversedCleanedData[bacteria])
-				{
-					if (!sourceGeneNeighbours.ContainsKey(gene))
-					{
-						sourceGeneNeighbours.Add(gene, 1);
-					}
-					else
-					{
-						sourceGeneNeighbours[gene] = sourceGeneNeighbours[gene] + 1;
-					}
-				}
-			}
-
-			return sourceGeneNeighbours;
+			return probabilities;
 		}
 	}
 }
