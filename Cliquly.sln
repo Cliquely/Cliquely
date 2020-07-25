@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30128.36
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlastFromNCBI", "BlastFromNCBI\BlastFromNCBI.csproj", "{52FD31EF-29AF-409F-B511-B885766289A6}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CliquesForGenome", "CliquesForGenome\CliquesForGenome.csproj", "{91BFE04F-D263-4FFF-B044-AA2ABD4DEAA9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CliquelyNetwork", "CliquelyNetwork\CliquelyNetwork.csproj", "{D4FE269B-75C6-4139-9872-1C4990F6294F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenomsFullInfo", "GenomsFullInfo\GenomsFullInfo.csproj", "{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -119,6 +121,18 @@ Global
 		{D4FE269B-75C6-4139-9872-1C4990F6294F}.Release|x64.Build.0 = Release|Any CPU
 		{D4FE269B-75C6-4139-9872-1C4990F6294F}.Release|x86.ActiveCfg = Release|Any CPU
 		{D4FE269B-75C6-4139-9872-1C4990F6294F}.Release|x86.Build.0 = Release|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Debug|x64.Build.0 = Debug|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Debug|x86.Build.0 = Debug|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Release|x64.ActiveCfg = Release|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Release|x64.Build.0 = Release|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Release|x86.ActiveCfg = Release|Any CPU
+		{1BF19942-AFF9-4B75-94FD-5E20CC5D0C31}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
