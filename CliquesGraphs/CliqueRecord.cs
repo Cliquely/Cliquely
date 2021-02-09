@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CliquesGraphs
@@ -22,13 +22,5 @@ namespace CliquesGraphs
         {
             return new { Taxonomy, Abbrev, Size, Genes }.GetHashCode();
         }
-    }
-
-    [Flags]
-    public enum eTaxonomy
-    {
-        Archaea = 1,
-        Bacteria = 2,
-        Eukaryota = 4
     }
 }

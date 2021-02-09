@@ -13,10 +13,12 @@ using Cliquely.Exceptions;
 namespace Cliquely
 {
 	public partial class Form1 : Form
-    {
+	{
 	    private readonly Dictionary<uint, string> GeneLines = new Dictionary<uint, string>();
+	    private string LastFasta { get; set; }
+	    private uint LastGene { get; set; }
 
-		public Form1()
+	    public Form1()
         {
             InitializeComponent();
 
@@ -25,6 +27,9 @@ namespace Cliquely
 	        textBoxMaxCliques.Text = "30";
 	        geneLbl.Text = "";
 
+	        comboBoxTaxonomy.DataSource = Enum.GetValues(typeof(eTaxonomy));
+	        comboBoxTaxonomy.SelectedItem = eTaxonomy.All;
+
 			Blast.Finished += BlastOnFinished;
 		}
 
@@ -32,32 +37,49 @@ namespace Cliquely
 		{
 			if (i_genes == null) throw new GeneNotFoundException();
 
-			var gene = SearchCliques(i_genes.First().Sequence);
+			var gene = SearchGene(i_genes.First().Sequence);
 
 			if (gene == null)
 			{
 				ShowInfoMsg("Could not find a gene for the given fasta sequence and the requirements.");
 			}
 
-			Invoke(new Action(() => buttonSearchFasta.Enabled = true));
+			ShowInfoMsg(GeneFounded(gene.Value));
+			SearchCliques(gene.Value);
+			Invoke(new Action(EnableUI));
 		}
 
 		private void buttonSearchFasta_Click(object sender, EventArgs e)
         {
+	        textBoxFasta.ReadOnly = true;
+
 	        buttonSearchFasta.Enabled = false;
+	        textBoxMaxCliqueSize.Enabled = false;
+	        textBoxMaxCliques.Enabled = false;
+	        textBoxTreshold.Enabled = false;
+	        comboBoxTaxonomy.Enabled = false;
+
+	        CliquesDGV.DataSource = null;
+	        ShowInfoMsg(string.Empty);
+
 	        new Thread(Search).Start();
         }
 
 		private void Search()
 		{
-			CliquesDGV.DataSource = null;
-
 			var fasta = textBoxFasta.Text;
-			var gene = SearchCliques(fasta);
+			uint? gene;
+
+			gene = fasta == LastFasta ? LastGene : SearchGene(fasta);
 
 			if (gene != null)
 			{
-				Invoke(new Action(() => buttonSearchFasta.Enabled = true));
+				LastFasta = fasta;
+				LastGene = gene.Value;
+
+				ShowInfoMsg(GeneFounded(gene.Value));
+				SearchCliques(gene.Value);
+				Invoke(new Action(EnableUI));
 
 				return;
 			}
@@ -67,23 +89,42 @@ namespace Cliquely
 			Blast.SendRequest(fasta);
 		}
 
-		private uint? SearchCliques(string fasta)
+		private void EnableUI()
+		{
+			textBoxFasta.ReadOnly = false;
+
+			buttonSearchFasta.Enabled = true;
+			textBoxMaxCliqueSize.Enabled = true;
+			textBoxMaxCliques.Enabled = true;
+			textBoxTreshold.Enabled = true;
+			comboBoxTaxonomy.Enabled = true;
+		}
+
+		private uint? SearchGene(string fasta)
 		{
 			uint? gene = null;
 
 			try
 			{
 				gene = SearchFastaInFastaLine(fasta);
-
-				if (gene != null)
-				{
-					ShowInfoMsg(GeneFounded(gene.Value));
-					DiscoverCliques(gene.Value);
-				}
 			}
 			catch (GeneNotFoundException)
 			{
 				ShowInfoMsg("Could not find a gene for the given fasta sequence and the requirements.");
+			}
+			catch (Exception e)
+			{
+				ShowInfoMsg("Some error occured.");
+			}
+
+			return gene;
+		}
+
+		private void SearchCliques(uint gene)
+		{
+			try
+			{
+				DiscoverCliques(gene);
 			}
 			catch (CliquesNotFoundException ex)
 			{
@@ -93,8 +134,6 @@ namespace Cliquely
 			{
 				ShowInfoMsg("Some error occured.");
 			}
-
-			return gene;
 		}
 
 		private uint? SearchFastaInFastaLine(string fasta)
@@ -133,8 +172,15 @@ namespace Cliquely
 			var maximalCliqueSize = GetMaximalCliqueSize();
 			var maxCliques = GetMaxCliques();
 
-			float probability = float.Parse(textBoxTreshold.Text);
-			var probabilitiesCalculator = new GeneProbabilitiesCalculator(gene, probability);
+			var probability = float.Parse(textBoxTreshold.Text);
+			eTaxonomy? taxonomy = null;
+
+			Invoke(new Action(() =>
+			{
+				taxonomy = (eTaxonomy)Enum.Parse(typeof(eTaxonomy), comboBoxTaxonomy.SelectedItem.ToString());
+			}));
+
+			var probabilitiesCalculator = new GeneProbabilitiesCalculator(gene, probability, taxonomy.Value);
 			var probabilities = probabilitiesCalculator.GetProbabilities();
 
 			if (probabilities == null)
@@ -149,7 +195,7 @@ namespace Cliquely
 
 			if(probability == 1)
 			{
-				ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, new List<List<uint>> { sortedGenes }, 0);
+				ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, new List<List<uint>> { sortedGenes }, 0, taxonomy.Value);
 				return;
 			}
 
@@ -161,23 +207,24 @@ namespace Cliquely
 				throw new CliquesNotFoundException { Gene = gene };
 			}
 
-			ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, discoverCliques.Cliques, discoverCliques.AmountOfCliquesLargerThanMaxCliqueSize);
+			ShowCliques(gene, probabilitiesCalculator.ReversedCleanedData, discoverCliques.Cliques, discoverCliques.AmountOfCliquesLargerThanMaxCliqueSize, taxonomy.Value);
 		}
 
-		private void ShowCliques(uint gene, Dictionary<string, List<uint>> reversedCleanedData, List<List<uint>> cliques, int amountOfDismissedCliquesBySize)
+		private void ShowCliques(uint gene, Dictionary<string, List<uint>> reversedCleanedData, List<List<uint>> cliques, int amountOfDismissedCliquesBySize, eTaxonomy taxonomy)
 		{
-			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene. {Environment.NewLine}" +
-				$"{amountOfDismissedCliquesBySize} were dismissed because they were too large (loading):");
+			var cliquesDiscoveredMsg = $"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene";
+			var dismissedCliquesMsg = $"{amountOfDismissedCliquesBySize} were dismissed because they were too large";
+
+			ShowInfoMsg($"{cliquesDiscoveredMsg}{(amountOfDismissedCliquesBySize > 0 ? $".\n{dismissedCliquesMsg}" : string.Empty)} loading:");
 
 			if (cliques.Count <= 100)
 			{
 				DisplayCliquesInGridView(cliques, gene, reversedCleanedData);
 			}
 
-			ExportCliquesToCsvFile(cliques, gene, reversedCleanedData);
+			ExportCliquesToCsvFile(cliques, gene, reversedCleanedData, taxonomy);
 
-			ShowInfoMsg($"{GeneFounded(gene)}\nDiscoverd all the cliques ({cliques.Count}) that containing the given gene. {Environment.NewLine}" +
-				$"{amountOfDismissedCliquesBySize} were dismissed because they were too large:");
+			ShowInfoMsg($"{cliquesDiscoveredMsg}{(amountOfDismissedCliquesBySize > 0 ? $".\n{dismissedCliquesMsg}" : string.Empty)}:");
 		}
 
 		private int GetMaxCliques()
@@ -260,13 +307,13 @@ namespace Cliquely
 			return cliqueRowItems;
 		}
 
-		private void ExportCliquesToCsvFile(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversedCleanedData)
+		private void ExportCliquesToCsvFile(List<List<uint>> cliques, uint gene, Dictionary<string, List<uint>> reversedCleanedData, eTaxonomy taxonomy)
 		{
 			var csv = new StringBuilder();
 			csv.AppendLine("Gene, Probability, Incidence, Count");
 			cliques.ForEach(clique => csv.AppendLine(string.Join(",", MakeCsvCompatible(GetCliqueRowItems(clique, gene, reversedCleanedData)))));
 
-			using (var writer = new StreamWriter($"Cliques {gene}.csv"))
+			using (var writer = new StreamWriter($"Cliques {gene}{(taxonomy == eTaxonomy.All ? string.Empty : $"({taxonomy})")}.csv"))
 			{
 				writer.Write(csv.ToString());
 			}
