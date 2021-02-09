@@ -2,7 +2,7 @@
   "profiles": {
     "CliquesGraphs": {
       "commandName": "Project",
-      "commandLineArgs": "Cliques90%.csv"
+      "commandLineArgs": "Cliques100%.csv"
     }
   }
 }

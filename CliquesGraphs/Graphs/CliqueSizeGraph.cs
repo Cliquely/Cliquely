@@ -14,7 +14,7 @@ namespace CliquesGraphs.Graphs
         {
             foreach (var (name, data) in dataFiles)
             {
-                var cliquesSizes = data.Distinct().Where(clique => (clique.Taxonomy & taxonomy) > 0).Select(clique => clique.Size).ToList();
+                var cliquesSizes = data.Where(clique => (clique.Taxonomy & taxonomy) > 0).Select(clique => clique.Size).ToList();
                 var cliquesSizeCounter = CountCliquesSizes(cliquesSizes);
                 var cliquesSizePercentage = calculatePercentages(cliquesSizeCounter, cliquesSizes.Count);
 

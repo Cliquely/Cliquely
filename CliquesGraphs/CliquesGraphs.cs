@@ -16,10 +16,12 @@ namespace CliquesGraphs
 
                 new CliqueSizeGraph(excel, "Archea cliques sizes distribution").Run(dataByFiles, eTaxonomy.Archaea);
                 new CliqueSizeGraph(excel, "Bacteria cliques sizes distribution").Run(dataByFiles, eTaxonomy.Bacteria);
-                //new CliqueSizeGraph(excel, "Eukaryota cliques sizes distribution").Run(dataByFiles, eTaxonomy.Eukaryota);
+                new CliqueSizeGraph(excel, "Eukaryota cliques sizes distribution").Run(dataByFiles, eTaxonomy.Eukaryota);
+                new CliqueSizeGraph(excel, "All Cliques sizes distribution").Run(dataByFiles, eTaxonomy.Eukaryota | eTaxonomy.Bacteria | eTaxonomy.Archaea);
                 new CliquesInGenomeGraph(excel, "Amount of cliques in Archea distribution").Run(dataByFiles, eTaxonomy.Archaea);
                 new CliquesInGenomeGraph(excel, "Amount of cliques in Bacteria distribution").Run(dataByFiles, eTaxonomy.Bacteria);
-                //new CliquesInGenomeGraph(excel, "Amount of cliques in Eukaryota distribution").Run(dataByFiles, eTaxonomy.Eukaryota);
+                new CliquesInGenomeGraph(excel, "Amount of cliques in Eukaryota distribution").Run(dataByFiles, eTaxonomy.Eukaryota);
+                new CliquesInGenomeGraph(excel, "Amount of cliques distribution").Run(dataByFiles, eTaxonomy.Eukaryota | eTaxonomy.Bacteria | eTaxonomy.Archaea);
 
                 excel.Save("Results.xlsx");
             }

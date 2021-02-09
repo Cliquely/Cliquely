@@ -29,7 +29,18 @@ namespace CliquesGraphs.CSV
             {
                 var cliqueRecord = line.Split(',');
 
-                records.Add(new CliqueRecord() {Taxonomy = Enum.Parse<eTaxonomy>(cliqueRecord[TAXONOMY_LOCATION]), Abbrev = cliqueRecord[ABBREV_LOCATION], Size = ushort.Parse(cliqueRecord[SIZE_LOCATION])});
+                var record = new CliqueRecord() { Taxonomy = Enum.Parse<eTaxonomy>(cliqueRecord[TAXONOMY_LOCATION]), Abbrev = cliqueRecord[ABBREV_LOCATION], Size = ushort.Parse(cliqueRecord[SIZE_LOCATION]), Genes = new List<uint>() };
+                for (var i = GENES_LOCATION; i < cliqueRecord.Length;i++)
+                {
+                    record.Genes.Add(uint.Parse(cliqueRecord[i]));
+                }
+
+                record.Genes.Sort();
+
+                if (!records.Exists(r => r.Genes.SequenceEqual(record.Genes) && r.Taxonomy == record.Taxonomy))
+                {
+                    records.Add(record);
+                }
             }
 
             return records;
