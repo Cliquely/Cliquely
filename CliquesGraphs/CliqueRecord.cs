@@ -1,5 +1,5 @@
-﻿using System;
-using Cliquely;
+using System;
+using System.Collections.Generic;
 
 namespace CliquesGraphs
 {
@@ -11,6 +11,8 @@ namespace CliquesGraphs
 
         public ushort Size { get; set; }
 
+        public List<uint> Genes { get; set; }
+
         public override bool Equals(object obj)
         {
             return GetHashCode().Equals((obj as CliqueRecord).GetHashCode());
@@ -18,7 +20,7 @@ namespace CliquesGraphs
 
         public override int GetHashCode()
         {
-            return Taxonomy.GetHashCode() + Abbrev.GetHashCode() + Size.GetHashCode();
+            return new { Taxonomy, Abbrev, Size, Genes }.GetHashCode();
         }
     }
 }
