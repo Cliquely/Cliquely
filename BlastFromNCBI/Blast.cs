@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using HtmlAgilityPack;
 using System.Threading;
+using System.Net;
 
 namespace BlastFromNCBI
 {
@@ -55,6 +56,10 @@ namespace BlastFromNCBI
         public static void SendRequest(string query, bool DELETE = true, string MATRIX = "BLOSUM62", string DATABASE = "nr", string PROGRAM = "blastp", int THRESHOLD = 11)
         {
             string url = $"https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=put&QUERY={query}&DATABASE={DATABASE}&PROGRAM={PROGRAM}&THRESHOLD={THRESHOLD}&email=elad1segev@gmail.com&tool=Cliquely";
+
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
             var response = r_client.GetStringAsync(url);
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(response.Result);

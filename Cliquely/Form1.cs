@@ -37,7 +37,17 @@ namespace Cliquely
 		{
 			if (i_genes == null) throw new GeneNotFoundException();
 
-			var gene = SearchGene(i_genes.First().Sequence);
+			var i = 0;
+			uint? gene;
+
+			do
+			{
+				ShowInfoMsg($"Could not find a gene for the given fasta sequence, searching in Blast...#{i+1}/{i_genes.Count}");
+
+				gene = SearchGene(i_genes[i].Sequence);
+				i++;
+			}
+			while (gene == null && i < i_genes.Count);
 
 			if (gene == null)
 			{
@@ -69,6 +79,9 @@ namespace Cliquely
 		{
 			var fasta = textBoxFasta.Text;
 			uint? gene;
+
+			ShowInfoMsg("Searching gene locally...");
+
 
 			gene = fasta == LastFasta ? LastGene : SearchGene(fasta);
 
