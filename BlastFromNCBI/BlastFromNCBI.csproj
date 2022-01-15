@@ -50,6 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Common\DiscoverCliques\DiscoverCliques.cs">
+      <Link>DiscoverCliques.cs</Link>
+    </Compile>
     <Compile Include="Blast.cs" />
     <Compile Include="BlastGene.cs" />
     <Compile Include="Program.cs" />
