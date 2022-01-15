@@ -326,7 +326,9 @@ namespace Cliquely
 			csv.AppendLine("Gene, Probability, Incidence, Count");
 			cliques.ForEach(clique => csv.AppendLine(string.Join(",", MakeCsvCompatible(GetCliqueRowItems(clique, gene, reversedCleanedData)))));
 
-			using (var writer = new StreamWriter($"Cliques {gene}{(taxonomy == eTaxonomy.All ? string.Empty : $"({taxonomy})")}.csv"))
+            var fileName = $"Cliques {gene}{(taxonomy == eTaxonomy.All ? string.Empty : $"({taxonomy})")}.csv";
+            
+			using (var writer = new StreamWriter(fileName))
 			{
 				writer.Write(csv.ToString());
 			}
@@ -334,7 +336,7 @@ namespace Cliquely
 			ShowInfoMsg("Saves cliques to csv file");
 			Invoke(new Action(() =>
 			{
-				MessageBox.Show("Exported all cliques to Cliques.csv");
+				MessageBox.Show($"Exported all cliques to {fileName}");
 			}));
 		}
 
