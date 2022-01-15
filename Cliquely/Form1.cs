@@ -77,7 +77,7 @@ namespace Cliquely
 
 		private void Search()
 		{
-			var fasta = textBoxFasta.Text;
+			var fasta = textBoxFasta.Text.Trim();
 			uint? gene;
 
 			ShowInfoMsg("Searching gene locally...");
