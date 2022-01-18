@@ -112,3 +112,53 @@ choice of the user that support the clique.
 * The columns that follow after \"*Count*\" detail the members of the
 clique.
 
+
+## Appendix A
+
+### Example for the calculation of *P<sub>co</sub>*
+
+Example for the relationship of the proteins across a universe of 10
+Bacterial organisms. The table indicates which organisms contain which
+proteins. For Example, Protein1 is part of the genome of Bacteria1, but
+is not part of the genome of Bacteria10.
+
+|            | Protein1 | Protein2 |
+|:----------:|:--------:|:--------:|
+| Bacteria1  |     X    |          |
+| Bacteria2  |     X    |     X    |
+| Bacteria3  |     X    |     X    |
+| Bacteria4  |     X    |          |
+| Bacteria5  |     X    |     X    |
+| Bacteria6  |          |     X    |
+| Bacteria7  |     X    |     X    |
+| Bacteria8  |          |     X    |
+| Bacteria9  |     X    |     X    |
+| Bacteria10 |          |     X    |
+
+Out of the 8 times Protein2 is present, in 5 times Protein1 is also
+present; Out of the 7 times Protein1 is present, in 5 times Protein1 is
+also present, thus
+
+<img src="https://latex.codecogs.com/png.image?\dpi{110}&space;\bg_white&space;\inline&space;P\left(&space;Protein1|Protein2&space;\right)&space;=&space;\frac{P(Protein1&space;\cap&space;Protein2)}{P(Protein2)}&space;=&space;\frac{5}{8}" title="\bg_white \inline P\left( Protein1|Protein2 \right) = \frac{P(Protein1 \cap Protein2)}{P(Protein2)} = \frac{5}{8}" />
+
+In the in the same way
+
+<img src="https://latex.codecogs.com/png.image?\dpi{110}&space;\bg_white&space;\inline&space;$P\left(&space;Protein2|Protein1&space;\right)&space;=&space;\frac{P(Protein2&space;\cap&space;Protein1)}{P(Protein1)}&space;=&space;\frac{5}{7}$" title="\bg_white \inline $P\left( Protein2|Protein1 \right) = \frac{P(Protein2 \cap Protein1)}{P(Protein1)} = \frac{5}{7}$" />
+
+\
+P<sub>co</sub> is calculated as the probability of Protein1 to be present in an
+organism given that Protein2 is present, multiplied by probability of
+Protein2 to be present in an organism given that Protein1 is present:
+
+<img src="https://latex.codecogs.com/png.image?\dpi{110}&space;\bg_white&space;\inline&space;$P_{co}(u,v)&space;=&space;\&space;P\left(&space;u|v&space;\right)*\&space;P\left(&space;v|u&space;\right)$" title="\bg_white \inline $P_{co}(u,v) = \ P\left( u|v \right)*\ P\left( v|u \right)$" />
+
+<img src="https://latex.codecogs.com/png.image?\dpi{110}&space;\bg_white&space;\inline&space;$P_{co}(Protein1,Protein2)&space;=&space;\&space;P\left(&space;Protein1|Protein2&space;\right)&space;\times&space;P\left(&space;Protein2|Protein1&space;\right)$" title="\bg_white \inline $P_{co}(Protein1,Protein2) = \ P\left( Protein1|Protein2 \right) \times P\left( Protein2|Protein1 \right)$" />
+
+<img src="https://latex.codecogs.com/png.image?\dpi{110}&space;\bg_white&space;\inline&space;$P_{co}(Protein1,Protein2)&space;=&space;\frac{5}{8}\&space;&space;\times&space;\frac{5}{7}&space;=&space;0.45$" title="\bg_white \inline $P_{co}(Protein1,Protein2) = \frac{5}{8}\  \times \frac{5}{7} = 0.45$" />
+
+Notably, in our analysis of orthology Protein1 and Protein2 are in fact
+representatives of a cluster of orthologs. Thus, the co-occurrence that
+is estimated using by Cliquely using *P<sub>co</sub>* is the co-occurrence of
+representatives of different orthology groups.
+
+
